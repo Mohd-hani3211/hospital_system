@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<p class="title" style="font-weight: bold;">{{ list_title|default:"قائمة طلبات قطع الغيار" }}</p>
+{% endblock %}
+
+{% block content %}
+<style>
+    .spare-request-card {
+        border: 0;
+        border-radius: 8px;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .spare-request-card .card-header,
+    .spare-request-card .card-footer {
+        background: #fff;
+    }
+
+    .spare-meta-item {
+        background: #f8fafc;
+        border: 1px solid #e9eef5;
+        border-radius: 8px;
+        padding: 10px 12px;
+        min-height: 64px;
+    }
+
+    .spare-meta-label {
+        color: #6b7280;
+        display: block;
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    .spare-meta-value {
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .approval-progress {
+        height: 12px;
+        border-radius: 999px;
+        background: #e5e7eb;
+    }
+
+    .approval-progress .progress-bar {
+        border-radius: 999px;
+    }
+
+    .spare-parts-table th,
+    .spare-parts-table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .spare-parts-table td:first-child {
+        white-space: normal;
+        min-width: 150px;
+    }
+
+    .spare-actions {
+        gap: 8px;
+    }
+
+    .spare-actions .btn {
+        border-radius: 6px;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container-fluid py-4" style="direction: rtl;">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card hospital-page-header p-3">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center align-items-start">
+                    <div class="mb-3 mb-sm-0 text-right">
+                        <span class="hospital-section-eyebrow d-block mb-1">متابعة التوفير والصرف والتعميد</span>
+                        <h4 class="font-weight-bold text-dark mb-1">{{ list_title|default:"إدارة طلبات قطع الغيار" }}</h4>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;">
+                            {{ list_description|default:"طلبات قطع الغيار المسجلة في النظام" }}:
+                            <span class="badge badge-primary bg-primary px-2 py-1" style="font-size: 0.8rem;">{{ result_count }} طلب</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <div class="text-right">
+                        <h5 class="card-title mb-0">
+                            <i class="material-icons align-middle text-primary ml-1">filter_alt</i>
+                            الفلاتر والترتيب
+                        </h5>
+                        <small class="text-muted">تم العثور على {{ result_count }} طلب قطع غيار نشط.</small>
+                    </div>
+                    <button class="btn btn-secondary btn-sm mb-0" type="button" data-toggle="collapse" data-target="#sparePartFilters" aria-expanded="true" aria-controls="sparePartFilters">
+                        الفلاتر المتقدمة
+                    </button>
+                </div>
+                <div class="collapse show" id="sparePartFilters">
+                    <div class="card-body">
+                        <form method="get" class="text-right">
+                            <div class="row">
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-q">بحث</label>
+                                    <input id="spare-q" type="search" name="q" value="{{ filters.q }}" class="form-control" placeholder="رقم الطلب، القسم، المهندس، اسم القطعة">
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-status">الحالة</label>
+                                    <select id="spare-status" name="status" class="form-control">
+                                        <option value="">كل الحالات النشطة</option>
+                                        {% for option in filter_options.statuses %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.status %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-kind">نوع الطلب</label>
+                                    <select id="spare-kind" name="order_kind" class="form-control">
+                                        <option value="">كل الأنواع</option>
+                                        {% for option in filter_options.order_kinds %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.order_kind %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-department">القسم</label>
+                                    <select id="spare-department" name="department" class="form-control">
+                                        <option value="">كل الأقسام المتاحة</option>
+                                        {% for option in filter_options.departments %}
+                                            <option value="{{ option.id }}" {% if option.id|stringformat:"s" == filters.department %}selected{% endif %}>{{ option.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-engineer">المهندس</label>
+                                    <select id="spare-engineer" name="engineer" class="form-control">
+                                        <option value="">كل المهندسين</option>
+                                        {% for engineer in filter_options.engineers %}
+                                            <option value="{{ engineer.pk }}" {% if engineer.pk|stringformat:"s" == filters.engineer %}selected{% endif %}>{{ engineer.user.get_full_name|default:engineer.user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-3">
+                                    <label for="spare-created-from">من تاريخ</label>
+                                    <input id="spare-created-from" type="date" name="created_from" value="{{ filters.created_from }}" class="form-control">
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-3">
+                                    <label for="spare-created-to">إلى تاريخ</label>
+                                    <input id="spare-created-to" type="date" name="created_to" value="{{ filters.created_to }}" class="form-control">
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="spare-sort">الترتيب</label>
+                                    <select id="spare-sort" name="sort" class="form-control">
+                                        {% for option in filter_options.sorts %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.sort %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-3 d-flex align-items-end">
+                                    <div class="filter-action-switch">
+                                        <label class="filter-switch" for="spare-only-actions">
+                                            <input class="filter-switch-input" type="checkbox" name="only_my_actions" value="1" id="spare-only-actions" {% if filters.only_my_actions %}checked{% endif %}>
+                                            <span class="filter-switch-control" aria-hidden="true"></span>
+                                            <span class="filter-switch-text">تحتاج إجراء مني فقط</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center" style="gap: 10px;">
+                                <div class="d-flex flex-wrap" style="gap: 8px;">
+                                    {% for active_filter in active_filters %}
+                                        <a class="active-filter-chip" href="{% if active_filter.remove_query %}?{{ active_filter.remove_query }}{% else %}{% url 'spare_part_list' %}{% endif %}">
+                                            {{ active_filter.label }}: {{ active_filter.value }} ×
+                                        </a>
+                                    {% empty %}
+                                        <span class="text-muted small">لا توجد فلاتر مفعلة حالياً.</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex flex-column flex-sm-row" style="gap: 8px;">
+                                    <a href="{% url 'spare_part_list' %}" class="btn btn-secondary mb-0">مسح الفلاتر</a>
+                                    <button type="submit" class="btn btn-primary mb-0">
+                                        <i class="material-icons align-middle ml-1">search</i>
+                                        تطبيق الفلاتر
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for part_request in objects %}
+            <div class="col-12 col-xl-6 mb-4 d-flex align-items-stretch">
+                <article class="card spare-request-card w-100 d-flex flex-column">
+                    <div class="card-header border-bottom p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="text-right">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="d-inline-flex align-items-center justify-content-center ml-2 rounded-circle bg-light text-primary" style="width: 38px; height: 38px;">
+                                        <i class="fa fa-cogs"></i>
+                                    </span>
+                                    <div>
+                                        <h5 class="mb-1 font-weight-bold text-dark">طلب قطع غيار #{{ part_request.id }}</h5>
+                                        <a href="{% url 'request_maintenance_details' part_request.maintenance_request.id %}" class="text-primary small">
+                                            <i class="fa fa-external-link ml-1"></i>
+                                            صفحة مراقبة طلب الصيانة #{{ part_request.maintenance_request.id }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-left">
+                                {% if part_request.status == 'awaiting_for_accepenace' %}
+                                    <span class="badge badge-warning bg-warning text-white px-3 py-2">في انتظار التعميد</span>
+                                {% elif part_request.status == 'waiting_purchase_accepted_parts' %}
+                                    <span class="badge badge-primary bg-primary px-3 py-2">بانتظار توفير القطع</span>
+                                {% elif part_request.status == 'bought_available_parts' %}
+                                    <span class="badge badge-primary bg-primary px-3 py-2">تم توفير القطع</span>
+                                {% elif part_request.status == 'issue_available_parts_issued_waiting_confirmation' %}
+                                    <span class="badge badge-primary bg-primary px-3 py-2">بانتظار صرف المخزن</span>
+                                {% elif part_request.status == 'avaliable_parts_issued_waiting_confirmation' %}
+                                    <span class="badge badge-warning bg-warning text-white px-3 py-2">بانتظار تأكيد المهندس</span>
+                                {% elif part_request.status == 'avaliable_parts_issued' %}
+                                    <span class="badge badge-success bg-success px-3 py-2">تم الصرف والتأكيد</span>
+                                {% elif part_request.status == 'rejected' %}
+                                    <span class="badge badge-dark bg-dark px-3 py-2">مرفوض</span>
+                                {% else %}
+                                    <span class="badge badge-secondary bg-secondary px-3 py-2">{{ part_request.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-3 d-flex flex-column">
+                        <div class="row text-right mb-3">
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="spare-meta-item">
+                                    <span class="spare-meta-label"><i class="fa fa-file-text-o ml-1"></i>نوع الطلب</span>
+                                    <span class="spare-meta-value">{{ part_request.get_order_kind_display }}</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="spare-meta-item">
+                                    <span class="spare-meta-label"><i class="fa fa-user-o ml-1"></i>المهندس</span>
+                                    <span class="spare-meta-value">
+                                        {% if part_request.engineer %}
+                                            {{ part_request.engineer.user.get_full_name|default:part_request.engineer.user.username }}
+                                        {% else %}
+                                            غير محدد
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4 mb-2">
+                                <div class="spare-meta-item">
+                                    <span class="spare-meta-label"><i class="fa fa-clock-o ml-1"></i>تاريخ الإنشاء</span>
+                                    <span class="spare-meta-value">{{ part_request.created_at|date:"Y-m-d H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 text-right">
+                            <span class="spare-meta-label"><i class="fa fa-align-right ml-1"></i>الوصف</span>
+                            <p class="mb-0 text-dark" style="line-height: 1.7;">{{ part_request.description|default:"لا يوجد وصف تفصيلي." }}</p>
+                        </div>
+
+                        <div class="mb-3 p-3 border rounded bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-2 text-right">
+                                <div>
+                                    <span class="spare-meta-label mb-1">المسمى الوظيفي المسؤول عن المرحلة التالية</span>
+                                    <strong class="text-dark">{{ part_request.next_approval_title }}</strong>
+                                </div>
+                                <span class="badge badge-light bg-light border text-dark px-2 py-1">{{ part_request.acceptance }} / 8</span>
+                            </div>
+                            <div class="progress approval-progress">
+                                <div class="progress-bar {% if part_request.acceptance >= 8 %}bg-success{% elif part_request.status == 'rejected' %}bg-danger{% else %}bg-primary{% endif %}"
+                                     role="progressbar"
+                                     style="width: {{ part_request.approval_percent }}%;"
+                                     aria-valuenow="{{ part_request.acceptance }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="8">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-hover spare-parts-table mb-0 text-right">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>اسم القطعة</th>
+                                        <th class="text-center">الكمية</th>
+                                        <th class="text-center">الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for spare_part in part_request.spare_parts.all %}
+                                        <tr data-part-id="{{ spare_part.pk }}">
+                                            <td>{{ spare_part.part_name }}</td>
+                                            <td class="text-center">
+                                                <span class="badge badge-light bg-light border text-dark px-2 py-1">{{ spare_part.quantity }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if spare_part.is_rejected %}
+                                                    <span class="badge badge-danger bg-danger">مرفوضة</span>
+                                                {% elif spare_part.acceptance >= 8 %}
+                                                    <span class="badge badge-success bg-success">معتمدة نهائياً</span>
+                                                {% elif spare_part.acceptance > 0 %}
+                                                    <span class="badge badge-primary bg-primary">معتمدة مستوى {{ spare_part.acceptance }}</span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary bg-secondary">بانتظار التعميد</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-3">لا توجد قطع مسجلة داخل هذا الطلب.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if part_request.cause %}
+                            <div class="bg-warning mb-3 text-right" style="border: 1px solid #535351ff; padding: 10px;">
+                                <i class="fa fa-info-circle ml-1"></i>
+                                <strong>سبب الرفض:</strong> {{ part_request.cause }}
+                                {% if part_request.rejected_by %}
+                                    <br>
+                                    <strong>رفض بواسطة:</strong> {{ part_request.rejected_by.get_full_name|default:part_request.rejected_by.username }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {% if part_request.can_take_approval_action %}
+                            <div class="d-flex flex-column flex-md-row spare-actions mt-auto">
+                                <form action="{% url 'spare_part_acceptance' part_request.pk %}" method="POST" class="flex-fill mb-2 mb-md-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm btn-block">
+                                        <i class="fa fa-check ml-1"></i>
+                                        قبول الطلب بجميع القطع
+                                    </button>
+                                </form>
+
+                                <button type="button"
+                                        class="btn btn-warning btn-sm flex-fill mb-2 mb-md-0 open-partial-reject-modal"
+                                        data-toggle="modal"
+                                        data-target="#partialRejectModal"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#partialRejectModal"
+                                        data-request-id="{{ part_request.pk }}"
+                                        data-action-url="{% url 'spare_part_rejected' part_request.pk %}">
+                                    <i class="fa fa-adjust ml-1"></i>
+                                    قبول الطلب ورفض بعض القطع
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-danger btn-sm flex-fill open-reject-all-modal"
+                                        data-toggle="modal"
+                                        data-target="#rejectAllModal"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#rejectAllModal"
+                                        data-request-id="{{ part_request.pk }}"
+                                        data-action-url="{% url 'spare_part_rejected' part_request.pk %}">
+                                    <i class="fa fa-times ml-1"></i>
+                                    رفض كل القطع
+                                </button>
+                            </div>
+                        {% endif %}
+
+                        {% if part_request.can_mark_parts_available %}
+                            <form action="{% url 'spare_part_acceptance' part_request.pk %}" method="POST" class="mt-auto">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="mark_available">
+                                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                    <i class="fa fa-shopping-cart ml-1"></i>
+                                    تم توفير القطع
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if part_request.can_issue_from_store_action %}
+                            <form action="{% url 'spare_part_acceptance' part_request.pk %}" method="POST" class="mt-auto">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="issue">
+                                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                    <i class="fa fa-sign-out ml-1"></i>
+                                    صرف القطع من المخزن
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if part_request.can_confirm_issuance_action %}
+                            <form action="{% url 'spare_part_acceptance' part_request.pk %}" method="POST" class="mt-auto">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="confirm_issuance">
+                                <button type="submit" class="btn btn-success btn-sm btn-block">
+                                    <i class="fa fa-check-circle ml-1"></i>
+                                    تأكيد استلام القطع
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </article>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="card shadow-sm border-0 p-5" style="border-radius: 8px; background: #fff;">
+                    <i class="fa fa-folder-open-o text-muted" style="font-size: 56px;"></i>
+                    <h5 class="text-muted mt-3 font-weight-bold">لا توجد طلبات قطع غيار نشطة حالياً</h5>
+                    <p class="text-muted small">طلبات قطع الغيار المكتملة والمرفوضة تظهر في سجل طلبات قطع الغيار.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+        <nav aria-label="صفحات طلبات قطع الغيار" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">السابق</a>
+                    </li>
+                {% endif %}
+                {% for page_number in paginator.page_range %}
+                    <li class="page-item {% if page_number == page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_number }}">{{ page_number }}</a>
+                    </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">التالي</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="partialRejectModal" tabindex="-1" role="dialog" aria-labelledby="partialRejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" dir="rtl">
+            <form id="partial-reject-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title font-weight-bold" id="partialRejectModalLabel">
+                        <i class="fa fa-adjust text-warning ml-1"></i>
+                        قبول الطلب ورفض بعض القطع
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body text-right">
+                    <p class="text-muted small mb-3">اختر القطع التي تريد رفضها، وسيتم تعميد بقية القطع في نفس العملية.</p>
+                    <div id="partial-reject-parts" class="border rounded p-2 mb-3"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="partial-reject-cause" class="font-weight-bold">سبب الرفض</label>
+                        <textarea id="partial-reject-cause" name="cause" class="form-control" rows="3" required placeholder="اكتب سبب رفض القطع المحددة"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">إلغاء العملية</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-paper-plane ml-1"></i>
+                        إرسال
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectAllModal" tabindex="-1" role="dialog" aria-labelledby="rejectAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" dir="rtl">
+            <form id="reject-all-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title font-weight-bold" id="rejectAllModalLabel">
+                        <i class="fa fa-times-circle text-danger ml-1"></i>
+                        رفض كل القطع
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body text-right">
+                    <div class="alert alert-danger">
+                        سيتم رفض طلب قطع الغيار بالكامل. الرجاء كتابة سبب الرفض.
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="reject-all-cause" class="font-weight-bold">سبب الرفض</label>
+                        <textarea id="reject-all-cause" name="cause" class="form-control" rows="3" required placeholder="اكتب سبب رفض الطلب بالكامل"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">إلغاء العملية</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-paper-plane ml-1"></i>
+                        إرسال
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var partialRejectForm = document.getElementById("partial-reject-form");
+    var rejectAllForm = document.getElementById("reject-all-form");
+    var partialRejectParts = document.getElementById("partial-reject-parts");
+    var partialRejectCause = document.getElementById("partial-reject-cause");
+    var rejectAllCause = document.getElementById("reject-all-cause");
+
+    function openModal(modalId) {
+        var modalElement = document.getElementById(modalId);
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            return;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalElement).modal("show");
+        }
+    }
+
+    document.querySelectorAll(".open-partial-reject-modal").forEach(function(button) {
+        button.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var card = button.closest(".spare-request-card");
+            var rows = card.querySelectorAll(".spare-parts-table tbody tr");
+            partialRejectForm.action = button.dataset.actionUrl;
+            partialRejectCause.value = "";
+            partialRejectParts.innerHTML = "";
+
+            rows.forEach(function(row) {
+                var partName = row.children[0] ? row.children[0].textContent.trim() : "";
+                var quantity = row.children[1] ? row.children[1].textContent.trim() : "";
+
+                if (!button.dataset.actionUrl || !partName || row.children.length < 3) {
+                    return;
+                }
+
+                var sourcePartId = row.dataset.partId;
+                if (!sourcePartId) {
+                    return;
+                }
+
+                var item = document.createElement("label");
+                item.className = "d-flex align-items-center justify-content-between border rounded p-2 mb-2";
+
+                var nameWrapper = document.createElement("span");
+                var input = document.createElement("input");
+                input.type = "checkbox";
+                input.name = "rejected_part_ids";
+                input.value = sourcePartId;
+                input.className = "ml-2";
+                nameWrapper.appendChild(input);
+                nameWrapper.appendChild(document.createTextNode(" " + partName));
+
+                var quantityBadge = document.createElement("span");
+                quantityBadge.className = "badge badge-light bg-light border text-dark";
+                quantityBadge.textContent = quantity;
+
+                item.appendChild(nameWrapper);
+                item.appendChild(quantityBadge);
+                partialRejectParts.appendChild(item);
+            });
+
+            openModal("partialRejectModal");
+        });
+    });
+
+    document.querySelectorAll(".open-reject-all-modal").forEach(function(button) {
+        button.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            rejectAllForm.action = button.dataset.actionUrl;
+            rejectAllCause.value = "";
+            openModal("rejectAllModal");
+        });
+    });
+
+    if (partialRejectForm) {
+        partialRejectForm.addEventListener("submit", function(event) {
+            if (!partialRejectForm.querySelector('input[name="rejected_part_ids"]:checked')) {
+                event.preventDefault();
+                alert("يرجى اختيار قطعة واحدة على الأقل لرفضها.");
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

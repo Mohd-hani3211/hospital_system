@@ -1,0 +1,24 @@
+<footer class="footer">
+  <div class="container-fluid">
+    <nav class="float-left">
+      <ul>
+        <li>
+          <span>{{ system_settings.system_name|default:"نظام إدارة صيانة المستشفى" }}</span>
+        </li>
+        {% if system_settings.phone %}
+          <li><a href="tel:{{ system_settings.phone }}">{{ system_settings.phone }}</a></li>
+        {% endif %}
+        {% if system_settings.email %}
+          <li><a href="mailto:{{ system_settings.email }}">{{ system_settings.email }}</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    <div class="copyright float-right">
+      &copy;
+      <script>
+        document.write(new Date().getFullYear())
+      </script>
+      {{ system_settings.footer_text|default:system_settings.organization_name|default:system_settings.system_name|default:"إدارة صيانة المستشفى" }}
+    </div>
+  </div>
+</footer>

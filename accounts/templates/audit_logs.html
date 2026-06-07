@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content">
+  <div class="container-fluid" dir="rtl">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header card-header-primary d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="card-title mb-0">سجل العمليات</h4>
+              <p class="card-category mb-0">عرض وتتبع العمليات المهمة داخل النظام</p>
+            </div>
+            <i class="material-icons">history</i>
+          </div>
+          <div class="card-body">
+            <form method="get" class="mb-4">
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label class="bmd-label-floating">المستخدم</label>
+                  <input type="text" name="user" value="{{ filters.user }}" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label>نوع العملية</label>
+                  <select name="action_type" class="form-control">
+                    <option value="">الكل</option>
+                    {% for value, label in action_choices %}
+                      <option value="{{ value }}" {% if filters.action_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="bmd-label-floating">اسم الموديل</label>
+                  <input type="text" name="model_name" value="{{ filters.model_name }}" class="form-control">
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label>من تاريخ</label>
+                  <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control">
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label>إلى تاريخ</label>
+                  <input type="date" name="date_to" value="{{ filters.date_to }}" class="form-control">
+                </div>
+              </div>
+              <div class="d-flex justify-content-end">
+                <a href="{% url 'audit_logs' %}" class="btn btn-outline-secondary ml-2">مسح</a>
+                <button type="submit" class="btn btn-primary">
+                  <i class="material-icons align-middle">search</i>
+                  بحث
+                </button>
+              </div>
+            </form>
+
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="text-primary">
+                  <tr>
+                    <th>التاريخ</th>
+                    <th>المستخدم</th>
+                    <th>العملية</th>
+                    <th>الكائن</th>
+                    <th>الوصف</th>
+                    <th class="text-center">التفاصيل</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in audit_logs %}
+                    <tr>
+                      <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                      <td>{{ log.user.get_full_name|default:log.user.username|default:"النظام" }}</td>
+                      <td><span class="badge badge-info">{{ log.get_action_type_display }}</span></td>
+                      <td>
+                        <strong>{{ log.model_name }}</strong>
+                        {% if log.object_id %}<small class="text-muted d-block">#{{ log.object_id }}</small>{% endif %}
+                      </td>
+                      <td>{{ log.description|default:log.object_repr|truncatechars:90 }}</td>
+                      <td class="text-center">
+                        <a href="{% url 'audit_log_detail' log.pk %}" class="btn btn-sm btn-outline-primary">
+                          <i class="material-icons">visibility</i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center text-muted py-5">لا توجد سجلات مطابقة.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if is_paginated %}
+              <nav aria-label="Audit log pages">
+                <ul class="pagination justify-content-center">
+                  {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&user={{ filters.user }}&action_type={{ filters.action_type }}&model_name={{ filters.model_name }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">السابق</a></li>
+                  {% endif %}
+                  <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                  {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&user={{ filters.user }}&action_type={{ filters.action_type }}&model_name={{ filters.model_name }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">التالي</a></li>
+                  {% endif %}
+                </ul>
+              </nav>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

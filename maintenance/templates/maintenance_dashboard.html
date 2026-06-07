@@ -1,0 +1,486 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title font-weight-bold">لوحة التحكم</span>
+{% endblock title %}
+
+{% block content %}
+<style>
+  .dashboard-page {
+    direction: rtl;
+  }
+  .dashboard-section {
+    margin-bottom: 24px;
+  }
+  .dashboard-welcome {
+    overflow: hidden;
+  }
+  .dashboard-welcome .welcome-metric {
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .dashboard-chart {
+    min-height: 260px;
+  }
+  .dashboard-chart .ct-chart {
+    height: 250px;
+  }
+  .dashboard-table th,
+  .dashboard-table td {
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .activity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    background: #0F6CBD;
+    margin-left: 8px;
+  }
+  @media (max-width: 767px) {
+    .dashboard-table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+</style>
+
+<div class="container-fluid dashboard-page">
+  {% if not dashboard_has_data %}
+    <div class="alert alert-warning text-right" role="alert">
+      لا توجد بيانات متاحة لك أو لا تملك صلاحية عرض هذه البيانات.
+    </div>
+  {% endif %}
+
+  {% with due_actions=maintenance_action_required_count|add:spare_part_action_required_count %}
+    <div class="dashboard-section">
+      <div class="hospital-page-header dashboard-welcome p-4">
+        <div class="row align-items-center">
+          <div class="col-lg-7 text-right mb-3 mb-lg-0">
+            <span class="header-eyebrow d-block mb-2">لوحة تشغيل الصيانة</span>
+            <h2 class="mb-2">مرحباً، {{ request.user.get_full_name|default:request.user.username }}</h2>
+            <p class="text-muted mb-0">
+              {{ request.user.profile.job_title.title_name|default:"بدون مسمى وظيفي" }}
+              <span class="mx-2">|</span>
+              {% now "Y-m-d" %}
+            </p>
+          </div>
+          <div class="col-lg-5">
+            <div class="row">
+              <div class="col-6 mb-2">
+                <div class="welcome-metric text-right">
+                  <small class="text-muted d-block">تحتاج إجراء</small>
+                  <strong class="h4 mb-0 d-block">{{ due_actions }}</strong>
+                </div>
+              </div>
+              <div class="col-6 mb-2">
+                <div class="welcome-metric text-right">
+                  <small class="text-muted d-block">إشعارات غير مقروءة</small>
+                  <strong class="h4 mb-0 d-block">{{ unread_notifications_count }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endwith %}
+
+  <div class="dashboard-section">
+    <div class="card">
+      <div class="card-header card-header-primary">
+        <h4 class="card-title mb-0">فترة التحليل</h4>
+        <p class="card-category">كل الإحصائيات والرسوم تعتمد على الفترة المحددة</p>
+      </div>
+      <div class="card-body">
+        <form method="get" class="row align-items-end">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <label class="font-weight-bold">الفترة السريعة</label>
+            <select name="period" id="dashboard-period" class="form-control">
+              <option value="today" {% if date_range.period == 'today' %}selected{% endif %}>اليوم</option>
+              <option value="last_7_days" {% if date_range.period == 'last_7_days' %}selected{% endif %}>آخر 7 أيام</option>
+              <option value="last_30_days" {% if date_range.period == 'last_30_days' %}selected{% endif %}>آخر 30 يوم</option>
+              <option value="last_90_days" {% if date_range.period == 'last_90_days' %}selected{% endif %}>آخر 90 يوم</option>
+              <option value="this_year" {% if date_range.period == 'this_year' %}selected{% endif %}>هذا العام</option>
+              <option value="custom" {% if date_range.period == 'custom' %}selected{% endif %}>فترة مخصصة</option>
+            </select>
+          </div>
+          <div class="col-lg-3 col-md-6 mb-3 custom-date-field">
+            <label class="font-weight-bold">من تاريخ</label>
+            <input type="date" name="from_date" class="form-control" value="{{ date_range.start_date|date:'Y-m-d' }}">
+          </div>
+          <div class="col-lg-3 col-md-6 mb-3 custom-date-field">
+            <label class="font-weight-bold">إلى تاريخ</label>
+            <input type="date" name="to_date" class="form-control" value="{{ date_range.end_date|date:'Y-m-d' }}">
+          </div>
+          <div class="col-lg-3 col-md-6 mb-3 text-left">
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="material-icons align-middle ml-1">filter_alt</i>
+              تطبيق الفلتر
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="row">
+      <div class="col-xl col-md-6 mb-4">
+        <div class="card hospital-kpi-card h-100">
+          <div class="card-body text-right">
+            <span class="kpi-icon bg-primary mb-3"><i class="material-icons">assignment</i></span>
+            <p class="text-muted mb-1">إجمالي الطلبات</p>
+            <div class="kpi-value">{{ kpis.total_maintenance }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl col-md-6 mb-4">
+        <div class="card hospital-kpi-card h-100">
+          <div class="card-body text-right">
+            <span class="kpi-icon bg-warning mb-3"><i class="material-icons">pending_actions</i></span>
+            <p class="text-muted mb-1">الطلبات النشطة</p>
+            <div class="kpi-value">{{ kpis.active_maintenance }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl col-md-6 mb-4">
+        <div class="card hospital-kpi-card h-100">
+          <div class="card-body text-right">
+            <span class="kpi-icon bg-success mb-3"><i class="material-icons">task_alt</i></span>
+            <p class="text-muted mb-1">الطلبات المكتملة</p>
+            <div class="kpi-value">{{ kpis.completed_maintenance }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl col-md-6 mb-4">
+        <div class="card hospital-kpi-card h-100">
+          <div class="card-body text-right">
+            <span class="kpi-icon bg-danger mb-3"><i class="material-icons">priority_high</i></span>
+            <p class="text-muted mb-1">الطلبات المتأخرة</p>
+            <div class="kpi-value">{{ kpis.delayed_requests }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl col-md-6 mb-4">
+        <div class="card hospital-kpi-card h-100">
+          <div class="card-body text-right">
+            <span class="kpi-icon bg-primary mb-3"><i class="material-icons">timer</i></span>
+            <p class="text-muted mb-1">متوسط زمن الإنجاز</p>
+            <div class="kpi-value" style="font-size: 1.25rem;">{{ kpis.avg_completion_time }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="row">
+      <div class="col-lg-8 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">عدد طلبات الصيانة عبر الزمن</h4>
+            <p class="card-category">تجميع {{ date_range.group_by }}</p>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="maintenanceTimelineChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">توزيع حالات طلبات الصيانة</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="maintenanceStatusChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-warning">
+            <h4 class="card-title">أكثر الأقسام طلباً للصيانة</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="departmentChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-success">
+            <h4 class="card-title">أفضل المهندسين أداءً</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="topEngineersChart"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="card">
+      <div class="card-header card-header-success">
+        <h4 class="card-title">أداء المهندسين</h4>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table dashboard-table">
+          <thead>
+            <tr>
+              <th>المهندس</th>
+              <th>عدد الطلبات المسندة</th>
+              <th>عدد الطلبات المكتملة</th>
+              <th>عدد الطلبات قيد التنفيذ</th>
+              <th>متوسط زمن الإنجاز</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in engineer_performance.rows %}
+              <tr>
+                <td>{{ row.engineer.user.get_full_name|default:row.engineer.user.username }}</td>
+                <td>{{ row.assigned_count }}</td>
+                <td>{{ row.completed_count }}</td>
+                <td>{{ row.active_count }}</td>
+                <td>{{ row.avg_completion_time }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">لا توجد بيانات مهندسين ضمن الفترة المحددة.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="row">
+      <div class="col-lg-4 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">توزيع حالات طلبات القطع</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="spareStatusChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">نوع طلب قطع الغيار</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="spareKindChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-warning">
+            <h4 class="card-title">أكثر قطع الغيار طلباً</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="topPartsChart"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="row">
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card card-stats dashboard-kpi"><div class="card-body"><p class="text-muted">طلبات القطع المعتمدة</p><h3 class="kpi-value">{{ approval_analytics.spare_requests_approved }}</h3></div></div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card card-stats dashboard-kpi"><div class="card-body"><p class="text-muted">طلبات القطع المرفوضة</p><h3 class="kpi-value">{{ approval_analytics.spare_requests_rejected }}</h3></div></div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card card-stats dashboard-kpi"><div class="card-body"><p class="text-muted">تقارير الإنجاز المعتمدة</p><h3 class="kpi-value">{{ approval_analytics.reports_approved }}</h3></div></div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card card-stats dashboard-kpi"><div class="card-body"><p class="text-muted">تقارير الإنجاز المرفوضة</p><h3 class="kpi-value">{{ approval_analytics.reports_rejected }}</h3></div></div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">أكثر المعمدين نشاطاً</h4>
+          </div>
+          <div class="card-body"><div class="ct-chart" id="topApproversChart"></div></div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">متوسط زمن الاعتماد</h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3"><p class="text-muted">طلبات القطع</p><h4>{{ approval_analytics.spare_avg_acceptance_time }}</h4></div>
+              <div class="col-md-6 mb-3"><p class="text-muted">تقارير الإنجاز</p><h4>{{ approval_analytics.report_avg_acceptance_time }}</h4></div>
+            </div>
+            <div class="table-responsive">
+              <table class="table dashboard-table">
+                <thead><tr><th>المستخدم</th><th>اعتمادات</th><th>رفض</th><th>الإجمالي</th></tr></thead>
+                <tbody>
+                  {% for approver in approval_analytics.approvers %}
+                    <tr><td>{{ approver.name }}</td><td>{{ approver.accepted }}</td><td>{{ approver.rejected }}</td><td>{{ approver.total }}</td></tr>
+                  {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted">لا توجد عمليات تعميد ضمن الفترة.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="row">
+      <div class="col-lg-4 mb-4">
+        <div class="card dashboard-chart">
+          <div class="card-header card-header-success">
+            <h4 class="card-title">نسبة نجاح الصيانة</h4>
+          </div>
+          <div class="card-body text-center">
+            <div class="ct-chart" id="successGaugeChart"></div>
+            <h3 class="font-weight-bold">{{ executive_analytics.success_rate }}%</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card">
+          <div class="card-header card-header-primary">
+            <h4 class="card-title">متوسط دورة حياة الطلب</h4>
+          </div>
+          <div class="card-body">
+            <h3 class="font-weight-bold">{{ executive_analytics.avg_lifecycle }}</h3>
+            <p class="text-muted mb-0">من تاريخ الإنشاء إلى تاريخ الإكمال.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <h4 class="card-title">الطلبات المتأخرة</h4>
+          </div>
+          <div class="card-body table-responsive">
+            <table class="table dashboard-table">
+              <tbody>
+                {% for row in executive_analytics.delayed_table %}
+                  <tr><td>{{ row.label }}</td><td class="font-weight-bold">{{ row.count }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-section">
+    <div class="card">
+      <div class="card-header card-header-primary">
+        <h4 class="card-title">آخر النشاطات</h4>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table dashboard-table">
+          <thead><tr><th>الوقت</th><th>النوع</th><th>العملية</th><th>المستخدم</th></tr></thead>
+          <tbody>
+            {% for activity in latest_activities %}
+              <tr>
+                <td>{{ activity.time|date:"Y-m-d H:i" }}</td>
+                <td><span class="activity-dot"></span>{{ activity.type }}</td>
+                <td>{{ activity.title }} - {{ activity.description }}</td>
+                <td>{{ activity.actor }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">لا توجد نشاطات ضمن الفترة المحددة.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ maintenance_analytics.timeline|json_script:"maintenance-timeline-data" }}
+{{ maintenance_analytics.status|json_script:"maintenance-status-data" }}
+{{ maintenance_analytics.departments|json_script:"department-data" }}
+{{ engineer_performance.top_completed_chart|json_script:"top-engineers-data" }}
+{{ spare_part_analytics.status|json_script:"spare-status-data" }}
+{{ spare_part_analytics.kind|json_script:"spare-kind-data" }}
+{{ spare_part_analytics.top_parts|json_script:"top-parts-data" }}
+{{ approval_analytics.top_approvers_chart|json_script:"top-approvers-data" }}
+{{ executive_analytics.success_rate|json_script:"success-rate-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const periodSelect = document.getElementById('dashboard-period');
+  const customFields = document.querySelectorAll('.custom-date-field');
+  function toggleCustomDates() {
+    customFields.forEach(function(field) {
+      field.style.display = periodSelect.value === 'custom' ? '' : 'none';
+    });
+  }
+  periodSelect.addEventListener('change', toggleCustomDates);
+  toggleCustomDates();
+
+  function chartData(id) {
+    return JSON.parse(document.getElementById(id).textContent);
+  }
+  function hasValues(data) {
+    return data && data.values && data.values.length && data.values.some(function(value) { return Number(value) > 0; });
+  }
+  function lineChart(selector, data) {
+    new Chartist.Line(selector, {
+      labels: data.labels || [],
+      series: [data.values || []]
+    }, {
+      fullWidth: true,
+      chartPadding: { right: 20, left: 10 },
+      low: 0,
+      showArea: true,
+      axisX: { showGrid: false }
+    });
+  }
+  function pieChart(selector, data) {
+    const safe = hasValues(data) ? data : { labels: ['لا توجد بيانات'], values: [1] };
+    new Chartist.Pie(selector, {
+      labels: safe.labels,
+      series: safe.values
+    }, {
+      donut: true,
+      donutWidth: 34,
+      labelInterpolationFnc: function(value) { return value; }
+    });
+  }
+  function barChart(selector, data) {
+    const safe = hasValues(data) ? data : { labels: ['لا توجد بيانات'], values: [0] };
+    new Chartist.Bar(selector, {
+      labels: safe.labels,
+      series: [safe.values]
+    }, {
+      horizontalBars: true,
+      seriesBarDistance: 10,
+      axisX: { onlyInteger: true, low: 0 },
+      axisY: { offset: 120 }
+    });
+  }
+
+  lineChart('#maintenanceTimelineChart', chartData('maintenance-timeline-data'));
+  pieChart('#maintenanceStatusChart', chartData('maintenance-status-data'));
+  barChart('#departmentChart', chartData('department-data'));
+  barChart('#topEngineersChart', chartData('top-engineers-data'));
+  pieChart('#spareStatusChart', chartData('spare-status-data'));
+  pieChart('#spareKindChart', chartData('spare-kind-data'));
+  barChart('#topPartsChart', chartData('top-parts-data'));
+  barChart('#topApproversChart', chartData('top-approvers-data'));
+
+  const successRate = Number(chartData('success-rate-data')) || 0;
+  new Chartist.Pie('#successGaugeChart', {
+    labels: [String(successRate) + '%', ''],
+    series: [successRate, Math.max(100 - successRate, 0)]
+  }, {
+    donut: true,
+    donutWidth: 40,
+    startAngle: 270,
+    total: 200,
+    showLabel: true
+  });
+});
+</script>
+{% endblock content %}

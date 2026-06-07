@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<span class="title">تفاصيل الموظف</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4" dir="rtl">
+  <div class="card employee-hero border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+        <div class="d-flex align-items-center text-right mb-3 mb-lg-0">
+          <img src="{% static 'img/faces/avatar.jpg' %}" alt="avatar" class="rounded-circle ml-3" style="width: 88px; height: 88px; object-fit: cover;">
+          <div>
+            <span class="hospital-section-eyebrow d-block mb-1">ملف موظف</span>
+            <h3 class="mb-1 font-weight-bold">{{ employee.get_full_name|default:employee.username }}</h3>
+            <p class="text-muted mb-2">
+              <i class="material-icons align-middle ml-1" style="font-size: 17px;">badge</i>
+              {{ profile_obj.job_title.title_name|default:"بدون مسمى وظيفي" }}
+            </p>
+            {% if employee.is_active %}
+              <span class="badge badge-success bg-success px-3 py-2">نشط</span>
+            {% else %}
+              <span class="badge badge-danger bg-danger px-3 py-2">غير نشط</span>
+            {% endif %}
+            {% if role_data.can_manage_system_setup %}
+              <span class="badge badge-primary px-3 py-2">مسؤول تهيئة النظام</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if can_manage_employee %}
+          <div class="d-flex flex-wrap justify-content-lg-end" style="gap: 8px;">
+            <a href="{% url 'edit_employee' employee.id %}" class="btn btn-sm btn-primary">
+              <i class="material-icons">edit</i>
+              تعديل بيانات الموظف
+            </a>
+            {% if profile_obj.job_title %}
+              <a href="{% url 'job_title_permissions' profile_obj.job_title.id %}" class="btn btn-sm btn-primary">
+                <i class="material-icons">admin_panel_settings</i>
+                إدارة الصلاحيات
+              </a>
+            {% endif %}
+            <form method="POST" action="{% url 'toggle_employee_active' employee.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm {% if employee.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                <i class="material-icons">{% if employee.is_active %}block{% else %}check_circle{% endif %}</i>
+                {% if employee.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
+              </button>
+            </form>
+            <a href="{% url 'employees' %}" class="btn btn-sm btn-secondary">
+              <i class="material-icons">arrow_back</i>
+              رجوع
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card card-stats h-100">
+        <div class="card-body text-right">
+          <p class="card-category">طلبات مسندة</p>
+          <h3 class="card-title">{{ stats.assigned_requests }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card card-stats h-100">
+        <div class="card-body text-right">
+          <p class="card-category">طلبات مكتملة</p>
+          <h3 class="card-title">{{ stats.completed_requests }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card card-stats h-100">
+        <div class="card-body text-right">
+          <p class="card-category">طلبات نشطة</p>
+          <h3 class="card-title">{{ stats.active_requests }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card card-stats h-100">
+        <div class="card-body text-right">
+          <p class="card-category">اعتمادات</p>
+          <h3 class="card-title">{{ stats.total_approvals }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title mb-0">المعلومات الأساسية</h4>
+        </div>
+        <div class="card-body">
+          <div class="row text-right">
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">اسم المستخدم</small><strong>{{ employee.username }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">الاسم الكامل</small><strong>{{ employee.get_full_name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">البريد الإلكتروني</small><strong>{{ employee.email|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">رقم الهاتف</small><strong>{{ profile_obj.phone_number|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">الرقم الوظيفي</small><strong>{{ profile_obj.employee_id|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">المسمى الوظيفي</small><strong>{{ profile_obj.job_title.title_name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">القسم</small><strong>{{ profile_obj.managing_department.name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">المبنى</small><strong>{{ profile_obj.managing_department.floor.building.name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">الطابق</small><strong>{{ profile_obj.managing_department.floor.name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">التخصص</small><strong>{{ profile_obj.specialty.name|default:"غير محدد" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">تاريخ الانضمام</small><strong>{{ employee.date_joined|date:"Y-m-d H:i" }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">آخر تسجيل دخول</small><strong>{{ employee.last_login|date:"Y-m-d H:i"|default:"لا يوجد" }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title mb-0">الدور والصلاحيات</h4>
+        </div>
+        <div class="card-body text-right">
+          <div class="mb-3">
+            <small class="text-muted d-block mb-2">الدور</small>
+            {% for role in role_data.role_labels %}
+              <span class="badge badge-primary bg-primary px-3 py-2 mb-1">{{ role }}</span>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            <small class="text-muted d-block mb-2">المجموعات</small>
+            {% for group_name in role_data.group_names %}
+              <span class="badge badge-light bg-light text-dark border px-2 py-1">{{ group_name }}</span>
+            {% empty %}
+              <span class="text-muted">لا توجد مجموعات.</span>
+            {% endfor %}
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                {% for permission in role_data.important_permissions %}
+                  <tr>
+                    <td class="text-right">{{ permission.label }}</td>
+                    <td class="text-left">
+                      {% if permission.enabled %}
+                        <span class="badge badge-success bg-success">مفعلة</span>
+                      {% else %}
+                        <span class="badge badge-secondary bg-secondary">غير مفعلة</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr><td class="text-muted text-center">لا توجد صلاحيات مرتبطة بالمسمى الوظيفي.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white">
+          <h4 class="card-title mb-0">الأداء</h4>
+        </div>
+        <div class="card-body">
+          <div class="row text-right">
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">طلبات قطع الغيار التي أنشأها</small><strong>{{ stats.spare_part_requests }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">تقارير الإنجاز</small><strong>{{ stats.complete_reports }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">اعتمادات قطع الغيار</small><strong>{{ stats.spare_part_approvals }}</strong></div>
+            <div class="col-md-6 mb-3"><small class="text-muted d-block">اعتمادات تقارير الإنجاز</small><strong>{{ stats.complete_report_approvals }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h4 class="card-title mb-0">آخر النشاطات</h4>
+          <span class="badge badge-danger bg-danger">{{ stats.unread_notifications }} غير مقروء</span>
+        </div>
+        <div class="card-body text-right">
+          {% for notification in latest_notifications %}
+            <div class="border-bottom pb-2 mb-2">
+              <strong class="d-block">{{ notification.title }}</strong>
+              <small class="text-muted">{{ notification.created_at|date:"Y-m-d H:i" }}</small>
+              <p class="mb-0 text-muted">{{ notification.message|truncatechars:90 }}</p>
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">لا توجد نشاطات أو إشعارات حديثة.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

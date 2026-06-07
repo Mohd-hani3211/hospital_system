@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title" style="font-weight: bold;">تفاصيل طلب الصيانة #{{ object.id }}</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4" dir="rtl">
+    <div class="hospital-page-header p-4 mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-right mb-3 mb-lg-0">
+                <span class="hospital-section-eyebrow d-block mb-1">متابعة كاملة لدورة طلب الصيانة</span>
+                <h2 class="mb-2">طلب صيانة #{{ object.id }}</h2>
+                <p class="text-muted mb-0">
+                    {{ object.department.name }} | {{ object.department.floor.building.name }} / {{ object.department.floor.name }}
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-left text-right">
+                {% if object.status == 'completed' %}
+                    <span class="badge badge-success px-3 py-2">مكتمل</span>
+                {% elif object.status == 'rejected' or object.status == 'spare_parts_rejected' or object.status == 'completed_report_rejected' %}
+                    <span class="badge badge-danger px-3 py-2">{{ object.get_status_display }}</span>
+                {% elif object.status == 'pending' or object.status == 'awaiting_parts' or object.status == 'awaiting_completed_report_acceptenace' %}
+                    <span class="badge badge-warning px-3 py-2">{{ object.get_status_display }}</span>
+                {% else %}
+                    <span class="badge badge-primary px-3 py-2">{{ object.get_status_display }}</span>
+                {% endif %}
+                <small class="text-muted d-block mt-2">آخر تحديث: {{ object.updated_at|date:"Y-m-d H:i" }}</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="material-icons text-primary ml-2">build_circle</i>
+                        <div>
+                            <h5 class="mb-0 font-weight-bold">بيانات طلب الصيانة</h5>
+                            <small class="text-muted">المعلومات الأساسية للعطل والجهة الطالبة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row text-right">
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">رقم الطلب</small>
+                            <span class="font-weight-bold text-dark">#{{ object.id }}</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">تاريخ الإنشاء</small>
+                            <span class="font-weight-bold text-dark">{{ object.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">القسم</small>
+                            <span class="font-weight-bold text-dark">
+                                <i class="material-icons align-middle text-muted ml-1" style="font-size: 17px;">business</i>
+                                {{ object.department.name }}
+                            </span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">الفني المكلف</small>
+                            {% if object.assigned_technician %}
+                                <span class="font-weight-bold text-dark">
+                                    <i class="material-icons align-middle text-muted ml-1" style="font-size: 17px;">engineering</i>
+                                    {{ object.assigned_technician.user.get_full_name|default:object.assigned_technician.user.username }}
+                                </span>
+                            {% else %}
+                                <span class="text-warning font-weight-bold">لم يتم تعيين فني بعد</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">التخصص المطلوب</small>
+                            <span class="font-weight-bold text-dark">{{ object.required_specialty.name }}</span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block mb-1">الأولوية</small>
+                            {% if object.priority == 'critical' %}
+                                <span class="badge badge-danger px-2 py-1">{{ object.get_priority_display }}</span>
+                            {% elif object.priority == 'high' %}
+                                <span class="badge badge-warning px-2 py-1">{{ object.get_priority_display }}</span>
+                            {% elif object.priority == 'medium' %}
+                                <span class="badge badge-primary px-2 py-1">{{ object.get_priority_display }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary px-2 py-1">{{ object.get_priority_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="rounded p-3 mt-2" style="background-color: #f8f9fa; border-right: 4px solid #17a2b8;">
+                        <small class="text-muted d-block mb-1">وصف العطل</small>
+                        <p class="mb-0 text-dark" style="line-height: 1.8;">{{ object.description }}</p>
+                    </div>
+
+                    {% if actions.can_accept_maintenance or actions.can_reject_maintenance or actions.can_accept_assignment or actions.can_reject_assignment or actions.can_reassign_engineer or actions.can_create_spare_part or actions.can_create_report %}
+                        <div class="mt-4 pt-3 border-top text-right">
+                            <h6 class="font-weight-bold mb-3">الإجراءات المتاحة</h6>
+                            <div class="d-flex flex-column" style="gap: 8px;">
+                                {% if actions.can_accept_maintenance or actions.can_reassign_engineer %}
+                                    <form action="{% url 'request_approve' object.pk %}" method="POST" class="border rounded p-2 bg-light">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="detail">
+                                        <label class="font-weight-bold mb-1" style="font-size: 12px;">اختيار المهندس</label>
+                                        <div class="d-flex flex-column flex-md-row" style="gap: 8px;">
+                                            <select name="assigned_to" class="form-control" required>
+                                                <option value="" disabled selected>اختر مهندس الصيانة</option>
+                                                {% for engineer in engineers %}
+                                                    <option value="{{ engineer.id }}">{{ engineer.user.get_full_name|default:engineer.user.username }} - {{ engineer.specialty }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-success btn-sm mb-0">
+                                                {% if actions.can_reassign_engineer %}إعادة التكليف{% else %}قبول وتكليف{% endif %}
+                                            </button>
+                                        </div>
+                                    </form>
+                                {% endif %}
+
+                                {% if actions.can_reject_maintenance %}
+                                    <button type="button" class="btn btn-danger btn-sm align-self-start" data-toggle="collapse" data-target="#rejectMaintenanceCollapse">
+                                        رفض طلب الصيانة
+                                    </button>
+                                    <div class="collapse" id="rejectMaintenanceCollapse">
+                                        <form action="{% url 'request_reject' object.pk %}" method="POST" class="border rounded p-2 bg-light">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="detail">
+                                            <label class="font-weight-bold mb-1" style="font-size: 12px;">سبب الرفض</label>
+                                            <textarea name="cause" class="form-control mb-2" rows="2" required></textarea>
+                                            <button type="submit" class="btn btn-danger btn-sm mb-0">تأكيد الرفض</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+
+                                {% if actions.can_accept_assignment or actions.can_reject_assignment %}
+                                    <div class="d-flex flex-column flex-sm-row" style="gap: 8px;">
+                                        {% if actions.can_accept_assignment %}
+                                            <form action="{% url 'request_maintenance_excute' object.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="detail">
+                                                <input type="hidden" name="action" value="accept_assignment">
+                                                <button type="submit" class="btn btn-success btn-sm mb-0">قبول التكليف</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if actions.can_reject_assignment %}
+                                            <form action="{% url 'request_maintenance_excute' object.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="detail">
+                                                <input type="hidden" name="action" value="reject_assignment">
+                                                <button type="submit" class="btn btn-danger btn-sm mb-0">رفض التكليف</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+
+                                {% if actions.can_create_spare_part %}
+                                    <button type="button" class="btn btn-warning btn-sm align-self-start" data-toggle="collapse" data-target="#createSparePartCollapse">
+                                        إنشاء طلب قطع غيار
+                                    </button>
+                                    <div class="collapse" id="createSparePartCollapse">
+                                        <form action="{% url 'spare_part_create' object.pk %}" method="POST" class="border rounded p-3 bg-light">
+                                            {% csrf_token %}
+                                            {{ formRSPart.as_p }}
+                                            {{ formRSParts.management_form }}
+                                            {% for spare_part_form in formRSParts %}
+                                                <div class="border rounded p-2 mb-2 bg-white">
+                                                    {{ spare_part_form.as_p }}
+                                                </div>
+                                            {% endfor %}
+                                            <button type="submit" class="btn btn-warning btn-sm mb-0">إرسال طلب القطع</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+
+                                {% if actions.can_create_report %}
+                                    <button type="button" class="btn btn-success btn-sm align-self-start" data-toggle="collapse" data-target="#createReportCollapse">
+                                        {% if object.status == 'completed_report_rejected' %}تعديل وإعادة إرسال تقرير الإنجاز{% else %}إنشاء تقرير إنجاز{% endif %}
+                                    </button>
+                                    <div class="collapse" id="createReportCollapse">
+                                        <form action="{% url 'request_maintenance_completed' object.pk %}" method="POST" class="border rounded p-2 bg-light">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="detail">
+                                            <label class="font-weight-bold mb-1" style="font-size: 12px;">تقرير الإنجاز</label>
+                                            <textarea name="complete_report" class="form-control mb-2" rows="3" required>{% if latest_report %}{{ latest_report.complete_report }}{% endif %}</textarea>
+                                            <button type="submit" class="btn btn-success btn-sm mb-0">إرسال التقرير</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if spare_part_requests %}
+                {% for part_req in spare_part_requests %}
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white border-bottom p-3">
+                            <div class="d-flex align-items-center">
+                                <i class="material-icons text-primary ml-2">inventory_2</i>
+                                <div>
+                                    <h5 class="mb-0 font-weight-bold">طلب قطع الغيار #{{ part_req.id }}</h5>
+                                    <small class="text-muted">تفاصيل الطلب والقطع المطلوب توفيرها</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row text-right">
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block mb-1">الحالة</small>
+                                    <span class="badge badge-light border text-dark px-2 py-1">{{ part_req.get_status_display }}</span>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block mb-1">نوع الطلب</small>
+                                    <span class="font-weight-bold text-dark">{{ part_req.get_order_kind_display }}</span>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block mb-1">المهندس</small>
+                                    <span class="font-weight-bold text-dark">
+                                        {% if part_req.engineer %}{{ part_req.engineer.user.get_full_name|default:part_req.engineer.user.username }}{% else %}غير محدد{% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block mb-1">آخر إجراء</small>
+                                    {% if part_req.latest_approval %}
+                                        <span class="text-dark">{{ part_req.latest_approval.get_decision_display }} - {{ part_req.latest_approval.approver.get_full_name|default:part_req.latest_approval.approver.username }}</span>
+                                    {% else %}
+                                        <span class="text-muted">لا يوجد</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <small class="text-muted d-block mb-1">سبب طلب القطع</small>
+                                    <span class="text-dark">{{ part_req.description }}</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">
+                                        <i class="material-icons align-middle ml-1" style="font-size: 16px;">fact_check</i>
+                                        مستوى التعميد
+                                    </small>
+                                    <small class="font-weight-bold text-dark">{{ part_req.acceptance }} / 8</small>
+                                </div>
+                                <div class="progress" style="height: 9px; border-radius: 10px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated {% if part_req.acceptance >= 8 %}bg-success{% else %}bg-primary{% endif %}"
+                                         role="progressbar" style="width: {{ part_req.approval_percent }}%;" aria-valuenow="{{ part_req.acceptance }}" aria-valuemin="0" aria-valuemax="8"></div>
+                                </div>
+                            </div>
+
+                            {% if part_req.rejected_reason or part_req.cause %}
+                                <div class="alert alert-warning text-right">
+                                    <strong>سبب الرفض:</strong> {{ part_req.rejected_reason|default:part_req.cause }}
+                                    {% if part_req.rejected_by %}
+                                        <br><strong>رفض بواسطة:</strong> {{ part_req.rejected_by.get_full_name|default:part_req.rejected_by.username }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th class="text-right">اسم القطعة</th>
+                                            <th class="text-center">الكمية</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for part in part_req.spare_parts.all %}
+                                            <tr>
+                                                <td class="text-right">{{ part.part_name }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge badge-secondary px-2 py-1">{{ part.quantity }}</span>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted py-3">لا توجد قطع مسجلة في هذا الطلب.</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {% if part_req.can_approve or part_req.can_reject or part_req.can_resubmit or part_req.can_mark_available or part_req.can_issue or part_req.can_confirm %}
+                                <div class="mt-3 pt-3 border-top text-right">
+                                    <h6 class="font-weight-bold mb-2">إجراءات طلب قطع الغيار</h6>
+                                    <div class="d-flex flex-column flex-md-row flex-wrap" style="gap: 8px;">
+                                        {% if part_req.can_approve %}
+                                            <form action="{% url 'spare_part_approve_from_detail' part_req.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success btn-sm mb-0">اعتماد</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if part_req.can_reject %}
+                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectSpareDetail{{ part_req.pk }}">رفض</button>
+                                        {% endif %}
+                                        {% if part_req.can_resubmit %}
+                                            <a href="{% url 'spare_part_update' part_req.pk %}" class="btn btn-warning btn-sm mb-0">تعديل وإعادة إرسال</a>
+                                        {% endif %}
+                                        {% if part_req.can_mark_available %}
+                                            <form action="{% url 'spare_part_mark_purchase_available_from_detail' part_req.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary btn-sm mb-0">تم توفير القطع</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if part_req.can_issue %}
+                                            <form action="{% url 'spare_part_issue_from_store_from_detail' part_req.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary btn-sm mb-0">صرف القطع من المخزن</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if part_req.can_confirm %}
+                                            <form action="{% url 'spare_part_confirm_issuance_from_detail' part_req.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary btn-sm mb-0">تأكيد استلام/صرف القطع</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                    {% if part_req.can_reject %}
+                                        <div class="collapse mt-2" id="rejectSpareDetail{{ part_req.pk }}">
+                                            <form action="{% url 'spare_part_reject_from_detail' part_req.pk %}" method="POST" class="border rounded p-2 bg-light">
+                                                {% csrf_token %}
+                                                <label class="font-weight-bold mb-1" style="font-size: 12px;">سبب الرفض</label>
+                                                <textarea name="cause" class="form-control mb-2" rows="2" required></textarea>
+                                                <button type="submit" class="btn btn-danger btn-sm mb-0">تأكيد الرفض</button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="material-icons text-success ml-2">task_alt</i>
+                        <div>
+                            <h5 class="mb-0 font-weight-bold">التنفيذ وتقرير الإنجاز</h5>
+                            <small class="text-muted">ملخص الأعمال المنفذة والوقت المستغرق</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if object.status == 'completed' %}
+                        <div class="row text-right">
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block mb-1">وقت الإنهاء</small>
+                                <span class="font-weight-bold text-dark">{{ object.completed_at|date:"Y-m-d H:i" }}</span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block mb-1">مدة معالجة العطل</small>
+                                {% if object.completed_at %}
+                                    <span class="font-weight-bold text-dark">{{ object.created_at|timesince:object.completed_at }}</span>
+                                {% else %}
+                                    <span class="text-muted">لم يسجل وقت الإنهاء.</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="rounded p-3" style="background-color: #f8f9fa; border-right: 4px solid #28a745;">
+                            <small class="text-muted d-block mb-1">ملاحظات الفني والإجراء المتخذ</small>
+                            <p class="mb-0 text-dark" style="line-height: 1.8;">{{ latest_report.complete_report|default:"لم يضف الفني تقرير الإنجاز." }}</p>
+                        </div>
+                    {% elif latest_report %}
+                        <div class="rounded p-3" style="background-color: #f8f9fa; border-right: 4px solid #17a2b8;">
+                            <small class="text-muted d-block mb-1">تقرير الإنجاز</small>
+                            <p class="mb-2 text-dark" style="line-height: 1.8;">{{ latest_report.complete_report }}</p>
+                            <span class="badge badge-primary">#{{ latest_report.id }} - {{ latest_report.get_status_display }} - {{ latest_report.acceptance }} / 5</span>
+                            <div class="row text-right mt-3">
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">تاريخ الإنشاء</small>
+                                    <span class="font-weight-bold text-dark">{{ latest_report.created_at|date:"Y-m-d H:i" }}</span>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <small class="text-muted d-block">آخر تحديث</small>
+                                    <span class="font-weight-bold text-dark">{{ latest_report.updated_at|date:"Y-m-d H:i" }}</span>
+                                </div>
+                            </div>
+                            <div class="progress my-3" style="height: 9px; border-radius: 10px;">
+                                <div class="progress-bar {% if latest_report.acceptance >= 5 %}bg-success{% else %}bg-primary{% endif %}"
+                                     role="progressbar" style="width: {{ latest_report.approval_percent }}%;" aria-valuenow="{{ latest_report.acceptance }}" aria-valuemin="0" aria-valuemax="5"></div>
+                            </div>
+                            {% if latest_report.latest_approval %}
+                                <small class="text-muted d-block mb-2">آخر إجراء: {{ latest_report.latest_approval.get_decision_display }} بواسطة {{ latest_report.latest_approval.approver.get_full_name|default:latest_report.latest_approval.approver.username }}</small>
+                            {% endif %}
+                            {% if latest_report.status == 'rejected' %}
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <strong>سبب الرفض:</strong> {{ latest_report.rejected_reason|default:latest_report.cause }}
+                                    {% if latest_report.rejected_by %}
+                                        <br><strong>رفض بواسطة:</strong> {{ latest_report.rejected_by.get_full_name|default:latest_report.rejected_by.username }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% if latest_report.can_approve or latest_report.can_reject or latest_report.can_resubmit %}
+                                <div class="mt-3 pt-3 border-top">
+                                    <h6 class="font-weight-bold mb-2">إجراءات تقرير الإنجاز</h6>
+                                    <div class="d-flex flex-column flex-sm-row" style="gap: 8px;">
+                                        {% if latest_report.can_approve %}
+                                            <form action="{% url 'complete_report_approve_from_detail' latest_report.pk %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success btn-sm mb-0">اعتماد التقرير</button>
+                                            </form>
+                                        {% endif %}
+                                        {% if latest_report.can_reject %}
+                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectReportDetail">رفض التقرير</button>
+                                        {% endif %}
+                                        {% if latest_report.can_resubmit %}
+                                            <button type="button" class="btn btn-warning btn-sm mb-0" data-toggle="collapse" data-target="#createReportCollapse">تعديل وإعادة إرسال</button>
+                                        {% endif %}
+                                    </div>
+                                    {% if latest_report.can_reject %}
+                                        <div class="collapse mt-2" id="rejectReportDetail">
+                                            <form action="{% url 'complete_report_reject_from_detail' latest_report.pk %}" method="POST" class="border rounded p-2 bg-light">
+                                                {% csrf_token %}
+                                                <label class="font-weight-bold mb-1" style="font-size: 12px;">سبب رفض التقرير</label>
+                                                <textarea name="cause" class="form-control mb-2" rows="2" required></textarea>
+                                                <button type="submit" class="btn btn-danger btn-sm mb-0">تأكيد الرفض</button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="material-icons d-block mb-2" style="font-size: 36px;">pending_actions</i>
+                            يظهر تقرير الإنجاز ومؤشرات الوقت عند اكتمال طلب الصيانة.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-3">
+                    <h5 class="mb-0 font-weight-bold">
+                        <i class="material-icons align-middle text-primary ml-1">timeline</i>
+                        حالة الطلب
+                    </h5>
+                </div>
+                <div class="card-body p-4 text-center">
+                    {% if object.status == 'pending' %}
+                        <span class="badge badge-warning px-3 py-2">قيد الانتظار</span>
+                    {% elif object.status == 'assigned' %}
+                        <span class="badge badge-primary px-3 py-2">تم تعيين الفني</span>
+                    {% elif object.status == 'accept_assignment_start_progress' %}
+                        <span class="badge badge-primary px-3 py-2">قيد التنفيذ</span>
+                    {% elif object.status == 'reject_assignment' %}
+                        <span class="badge badge-danger px-3 py-2">رفض الفني التكليف</span>
+                    {% elif object.status == 'awaiting_parts' %}
+                        <span class="badge badge-warning px-3 py-2">بانتظار قطع الغيار</span>
+                    {% elif object.status == 'spare_parts_rejected' %}
+                        <span class="badge badge-danger px-3 py-2">تم رفض طلب قطع الغيار</span>
+                    {% elif object.status == 'obtained_parts' %}
+                        <span class="badge badge-success px-3 py-2">تم الحصول على قطع الغيار</span>
+                    {% elif object.status == 'awaiting_completed_report_acceptenace' %}
+                        <span class="badge badge-primary px-3 py-2">بانتظار تعميد التقرير</span>
+                    {% elif object.status == 'completed_report_rejected' %}
+                        <span class="badge badge-danger px-3 py-2">تم رفض تقرير الإنجاز</span>
+                    {% elif object.status == 'completed' %}
+                        <span class="badge badge-success px-3 py-2">مكتمل</span>
+                    {% elif object.status == 'rejected' %}
+                        <span class="badge badge-danger px-3 py-2">مرفوض / ملغى</span>
+                    {% endif %}
+                    <p class="text-muted mt-3 mb-0" style="font-size: 12px;">آخر تحديث: {{ object.updated_at|date:"Y-m-d H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-3">
+                    <h5 class="mb-0 font-weight-bold">
+                        <i class="material-icons align-middle text-primary ml-1">location_on</i>
+                        موقع العطل
+                    </h5>
+                </div>
+                <div class="card-body p-3 text-right">
+                    <div class="mb-2">
+                        <small class="text-muted d-block">القسم</small>
+                        <span class="font-weight-bold text-dark">{{ object.department.name }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">الطابق</small>
+                        <span class="font-weight-bold text-dark">{{ object.department.floor.name }}</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">المبنى</small>
+                        <span class="font-weight-bold text-dark">{{ object.department.floor.building.name }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-3">
+                    <h5 class="mb-0 font-weight-bold">
+                        <i class="material-icons align-middle text-secondary ml-1">history</i>
+                        سجل مختصر
+                    </h5>
+                </div>
+                <div class="card-body p-3 text-right">
+                    <div class="mb-2">
+                        <small class="text-muted d-block">إنشاء طلب الصيانة</small>
+                        <span class="font-weight-bold text-dark">{{ object.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">آخر تحديث لطلب الصيانة</small>
+                        <span class="font-weight-bold text-dark">{{ object.updated_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% if object.completed_at %}
+                        <div class="mb-2">
+                            <small class="text-muted d-block">تاريخ الإكمال</small>
+                            <span class="font-weight-bold text-success">{{ object.completed_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    {% endif %}
+                    {% if latest_report.latest_approval %}
+                        <div>
+                            <small class="text-muted d-block">آخر إجراء على التقرير</small>
+                            <span class="font-weight-bold text-dark">{{ latest_report.latest_approval.get_decision_display }} - {{ latest_report.latest_approval.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if object.status == 'rejected' %}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-danger text-white p-3">
+                        <h5 class="mb-0 font-weight-bold">
+                            <i class="material-icons align-middle ml-1">cancel</i>
+                            سبب الرفض
+                        </h5>
+                    </div>
+                    <div class="card-body p-3 text-right">
+                        <p class="mb-0 text-dark">{{ object.cause|default:"لم يسجل سبب الرفض." }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

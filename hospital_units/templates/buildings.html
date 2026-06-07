@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class='card'>
+    <div class="card-header card-header-icon card-header-primary">
+        <div class="card-icon">
+            <i class="material-icons">assignment</i>
+        </div>
+         <div class=" float-right">
+                <a href="{% url "add_building" %}" class="btn btn-sm  btn-primary btn-round" style="margin-top: -10px;">
+                      
+                    <i class="material-icons">add</i>
+                </a>
+            </div>
+            
+        <h4 class="card-title "> قائمة المباني </h4>
+    </div>
+    <div class="card-body table-full-width table-hover">
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead class="">
+                    <th class="d-none d-sm-table-cell">
+                        ID
+                    </th>
+                    <th class="text-center">
+                        اسم المبنى
+                    </th>
+                    <th class="text-center">
+                         الوصف
+                    </th>
+                    <th class="text-center">
+                        الاجراءات
+                    </th>
+                </thead>
+                <tbody>
+                    {% for building in buildings %}
+                    <tr class="">
+                        <td class="d-none d-sm-table-cell">
+                            {{ building.id }}
+                        </td>
+                        <td class="text-center">
+                            {{ building.name }}
+                        </td>
+                        <td class="text-center">
+                            {{ building.description }}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'edit_building' building.id %}" class="btn btn-sm btn-primary btn-round">
+                                <i class="material-icons">edit</i>
+                            </a>
+                            <form method="POST" id="delete-form" action="{% url 'delete_building' building.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-sm btn-danger btn-round"  onclick="confirmDelete()">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                            </form>
+                    </tr>
+                    {% endfor %}
+                   
+            
+                </tbody>
+
+            </table>
+           
+        </div>
+    </div>
+                
+</div>
+<!-- في ملف roles.html أو القالب الأساسي -->
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="alert alert-danger">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+
+
+{% endblock %}

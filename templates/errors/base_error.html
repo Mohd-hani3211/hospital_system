@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block error_title %}خطأ{% endblock %} - {{ system_settings.system_name|default:"طلبات الصيانة" }}</title>
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+  <link href="{% static 'css/material-dashboard.min.css' %}" rel="stylesheet">
+  <style>
+    body {
+      background: #f5f7fb;
+      color: #263238;
+      min-height: 100vh;
+    }
+    .error-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .error-card {
+      width: 100%;
+      max-width: 560px;
+      border: 0;
+      border-radius: 8px;
+      box-shadow: 0 16px 44px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+    }
+    .error-icon {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #EAF4FF;
+      color: #0F6CBD;
+      margin-bottom: 16px;
+    }
+    .error-icon .material-icons {
+      font-size: 38px;
+    }
+    .error-code {
+      color: #9aa4b2;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .error-actions {
+      gap: 10px;
+    }
+    @media (max-width: 576px) {
+      .error-actions {
+        flex-direction: column;
+      }
+      .error-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="error-page">
+    <section class="card error-card text-center">
+      <div class="card-body p-4 p-md-5">
+        <div class="error-icon">
+          <i class="material-icons">{% block error_icon %}error_outline{% endblock %}</i>
+        </div>
+        <div class="error-code mb-2">{% block error_code %}{% endblock %}</div>
+        <h1 class="h3 font-weight-bold mb-3">{% block heading %}{% endblock %}</h1>
+        <p class="text-muted mb-4" style="line-height: 1.8;">{% block message %}{% endblock %}</p>
+        <div class="d-flex justify-content-center error-actions">
+          <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="material-icons align-middle ml-1">home</i>
+            العودة للرئيسية
+          </a>
+          {% block extra_action %}{% endblock %}
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

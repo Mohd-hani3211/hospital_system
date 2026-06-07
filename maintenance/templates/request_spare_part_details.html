@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+
+<span class=" title"  style="font-weight: bold;">  تفاصل طلب قطع الغيار رقم </span>
+{% endblock title %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8" style="margin-bottom: 5rem;">
+            
+            <div class="card shadow border-0" style="border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;">
+                
+                <div class="card-header text-center py-4 border-bottom" style="background-color: #fcfcfc !important;">
+                    <div class="icon icon-shape text-center border-radius-md d-flex align-items-center justify-content-center mx-auto mb-2" 
+                         style="width: 50px; height: 50px; background: linear-gradient(135deg, #0F6CBD, #2A9D8F); border-radius: 12px; box-shadow: 0 10px 20px rgba(15, 108, 189, 0.22);">
+                        <i class="material-icons text-white" style="font-size: 26px; line-height: 50px;">settings_suggest</i>
+                    </div>
+                    <h5 class="mb-1 text-dark font-weight-bold" style="font-family: inherit; font-size: 1.2rem; letter-spacing: -0.5px;">
+                        طلب قطع غيار رقم: <span class="text-primary">#{{ part_request.id }}</span>
+                    </h5>
+                    <span class="text-muted" style="font-size: 0.85rem;">
+                        <i class="material-icons align-middle text-muted ml-1" style="font-size: 15px;">link</i>مرتبط بطلب صيانة: <strong class="text-dark">#{{ part_request.maintenance_request.id }}</strong>
+                    </span>
+                    
+                    <div class="mt-2">
+                        {% if part_request.maintenance_request.priority == 'critical' %}
+                            <span class="badge badge-danger px-3 py-1 shadow-sm" style="font-size: 0.72rem; border-radius: 30px;">حرجة (طوارئ فورية)</span>
+                        {% elif part_request.maintenance_request.priority == 'high' %}
+                            <span class="badge badge-warning text-white px-3 py-1 shadow-sm" style="font-size: 0.72rem; border-radius: 30px; background-color: #fb8c00;">عالية (مستعجلة)</span>
+                        {% elif part_request.maintenance_request.priority == 'medium' %}
+                            <span class="badge badge-info px-3 py-1 shadow-sm" style="font-size: 0.72rem; border-radius: 30px;">متوسطة</span>
+                        {% else %}
+                            <span class="badge badge-secondary px-3 py-1 shadow-sm" style="font-size: 0.72rem; border-radius: 30px;">منخفضة (روتينية)</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    
+                    <div class="row mb-4 text-right">
+                        <div class="col-12 col-md-8 mb-3 mb-md-0">
+                            <span class="text-uppercase text-muted d-block font-weight-bold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px; opacity: 0.8;">اسم قطعة الغيار المطلوبة</span>
+                            <span class="text-dark font-weight-bold" style="font-size: 1.15rem; word-break: break-all;">{{ part_request.part_name }}</span>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <span class="text-uppercase text-muted d-block font-weight-bold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px; opacity: 0.8;">الكمية</span>
+                            <span class="badge font-weight-bold px-3 py-2 border text-dark d-inline-block" style="font-size: 1.05rem; background-color: #f8f9fa; border-color: #e9ecef !important; border-radius: 8px;">
+                                {{ part_request.quantity }} <span class="text-muted font-weight-light" style="font-size: 0.85rem;">قطعة</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 rounded text-right" style="border-right: 5px solid #0F6CBD; background-color: #F8FAFC; border-radius: 4px 10px 10px 4px;">
+                        <span class="text-uppercase text-muted d-block font-weight-bold mb-1" style="font-size: 0.72rem; opacity: 0.8;">الوصف التفصيلي / مبرر الطلب:</span>
+                        <p class="text-dark font-weight-normal mb-0" style="font-size: 0.92rem; line-height: 1.6; color: #333 !important;">
+                            {{ part_request.description|default:"لا يوجد وصف تفصيلي متوفر لهذا الطلب في النظام حالياً." }}
+                        </p>
+                    </div>
+
+                    <div class="row mb-4 text-right">
+                        <div class="col-12 col-sm-6 mb-3 mb-sm-0">
+                            <div class="p-3 border" style="background-color: #ffffff; border-color: #f0f0f0 !important; border-radius: 12px;">
+                                <span class="text-muted d-block mb-1" style="font-size: 0.75rem; font-weight: 500;">القسم طالب الصيانة</span>
+                                <span class="font-weight-bold text-dark" style="font-size: 0.95rem;">
+                                    <i class="material-icons text-muted align-middle ml-1" style="font-size: 18px;">business</i>{{ part_request.maintenance_request.department.name }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <div class="p-3 border" style="background-color: #ffffff; border-color: #f0f0f0 !important; border-radius: 12px;">
+                                <span class="text-muted d-block mb-1" style="font-size: 0.75rem; font-weight: 500;">الفني المكلف بالتركيب</span>
+                                <span class="font-weight-bold text-dark" style="font-size: 0.95rem;">
+                                    {% if part_request.maintenance_request.assigned_technician %}
+                                        <i class="material-icons text-muted align-middle ml-1" style="font-size: 18px;">build</i>{{ part_request.maintenance_request.assigned_technician.user.get_full_name }}
+                                    {% else %}
+                                        <span class="text-danger font-weight-bold"><i class="material-icons text-danger align-middle ml-1" style="font-size: 16px;">warning</i>في انتظار التعيين</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="border-top: 1px dashed #e0e0e0;">
+
+                    <div class="mb-2 text-right">
+                        <span class="text-muted d-block mb-3 font-weight-bold" style="font-size: 0.8rem; letter-spacing: 0.3px;">
+                            <i class="material-icons align-middle text-primary ml-1" style="font-size: 20px;">fact_check</i> مسار ومراحل الاعتماد الفني:
+                        </span>
+                        
+                        {% if part_request.acceptance >= 8 %}
+                            <div class="p-3 mb-0 rounded d-flex align-items-center" style="background: linear-gradient(60deg, #e8f5e9, #c8e6c9); border: 1px solid #a5d6a7; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);">
+                                <i class="material-icons text-success ml-3" style="font-size: 32px;">verified</i>
+                                <div class="text-right">
+                                    <h6 class="text-success mb-1 font-weight-bold" style="font-size: 0.95rem;">تم اعتماد طلب قطع الغيار نهائياً</h6>
+                                    <p class="text-success mb-0 font-weight-normal" style="font-size: 0.8rem; opacity: 0.9;">اكتملت مراحل التعميد الثمانية.</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-between text-center align-items-center px-2 mt-3" style="position: relative;">
+                                
+                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
+                                    <i class="material-icons {% if part_request.acceptance >= 1 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 1 %}opacity: 0.3;{% endif %}">
+                                        {% if part_request.acceptance >= 1 %}check_circle{% else %}radio_button_unchecked{% endif %}
+                                    </i>
+                                    <span class="d-block {% if part_request.acceptance >= 1 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">رئيس القسم</span>
+                                </div>
+                                
+                                <div class="flex-grow-1" style="height: 2px; background-color: {% if part_request.acceptance >= 2 %}#4caf50{% else %}#f0f0f0{% endif %}; margin-bottom: 20px;"></div>
+                                
+                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
+                                    <i class="material-icons {% if part_request.acceptance >= 2 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 2 %}opacity: 0.3;{% endif %}">
+                                        {% if part_request.acceptance >= 2 %}check_circle{% else %}radio_button_unchecked{% endif %}
+                                    </i>
+                                    <span class="d-block {% if part_request.acceptance >= 2 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">مدير الإدارة</span>
+                                </div>
+                                
+                                <div class="flex-grow-1" style="height: 2px; background-color: {% if part_request.acceptance >= 3 %}#4caf50{% else %}#f0f0f0{% endif %}; margin-bottom: 20px;"></div>
+                                
+                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
+                                    <i class="material-icons {% if part_request.acceptance >= 3 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 3 %}opacity: 0.3;{% endif %}">
+                                        {% if part_request.acceptance >= 3 %}check_circle{% else %}radio_button_unchecked{% endif %}
+                                    </i>
+                                    <span class="d-block {% if part_request.acceptance >= 3 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">المدير العام</span>
+                                </div>
+                                
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <div class="card-footer p-3 d-flex justify-content-between align-items-center border-top" style="background-color: #fafafa !important;">
+                    <div class="text-right pr-2">
+                        <span class="text-muted d-block" style="font-size: 0.68rem; font-weight: 500;">تاريخ وتوقيت تقديم الطلب</span>
+                        <span class="text-dark font-weight-bold" style="font-size: 0.8rem;"><i class="material-icons align-middle text-muted ml-1" style="font-size: 14px;">schedule</i>{{ part_request.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="pl-2">
+                        {% if part_request.status == 'awaiting_for_accepenace' %}
+                            <span class="badge badge-secondary px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">في انتظار التعميد</span>
+                        {% elif part_request.status == 'waiting_purchase_accepted_parts' %}
+                            <span class="badge badge-info px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">بانتظار توفير القطع</span>
+                        {% elif part_request.status == 'bought_available_parts' %}
+                            <span class="badge badge-primary px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">تم توفير القطع</span>
+                        {% elif part_request.status == 'issue_available_parts_issued_waiting_confirmation' %}
+                            <span class="badge badge-info px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">بانتظار صرف المخزن</span>
+                        {% elif part_request.status == 'avaliable_parts_issued_waiting_confirmation' %}
+                            <span class="badge badge-warning px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">بانتظار تأكيد المهندس</span>
+                        {% elif part_request.status == 'avaliable_parts_issued' %}
+                            <span class="badge badge-success px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">تم الصرف والتأكيد</span>
+                        {% elif part_request.status == 'rejected' %}
+                            <span class="badge badge-dark px-3 py-2" style="font-size: 0.75rem; border-radius: 6px;">مرفوض</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{%endblock%}

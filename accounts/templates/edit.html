@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+<span class="title"> {{ title|default:"تعديل" }}  </span>
+{% endblock title %}
+
+
+{% block content %}
+<div class="card">
+    <div class="card-header card-header-primary"><h4 class="card-title"> {{ title|default:"تعديل" }} </h4></div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="row">
+                {% for field in form %}
+                <div class="col-md-6 mb-3">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    <small class="text-danger">{{ field.errors.0 }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn  btn-primary">حفظ  </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title font-weight-bold">إدارة صلاحيات: {{ job_title.title_name }}</span>
+{% endblock title %}
+
+{% block content %}
+<style>
+    #permissions-form .form-check {
+        padding: 0;
+    }
+
+    #permissions-form .form-check .form-check-label {
+        display: inline-flex;
+        align-items: center;
+        gap: .55rem;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    #permissions-form .form-check .form-check-input {
+        position: static;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        opacity: 1;
+        overflow: visible;
+        pointer-events: auto;
+        accent-color: #0F6CBD;
+        flex: 0 0 auto;
+        z-index: auto;
+    }
+
+    #permissions-form .form-check .form-check-input:disabled {
+        cursor: not-allowed;
+        opacity: .55;
+    }
+</style>
+
+<div class="container-fluid py-4" dir="rtl">
+    <form method="POST" id="permissions-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="mb-0 font-weight-bold">
+                    <i class="material-icons align-middle text-primary ml-1">tune</i>
+                    خيارات الاختيار السريع للرتب الأساسية
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="form-group mb-3">
+                    <label class="font-weight-bold">المسمى الوظيفي:</label>
+                    <input type="text" class="form-control bg-white" value="{{ job_title.title_name }}" readonly>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check text-right">
+                            <label class="form-check-label font-weight-bold" for="{{ form.is_department_manager.id_for_label }}">
+                                {{ form.is_department_manager }}
+                                {{ form.is_department_manager.label }}
+                            </label>
+                            <small class="text-danger d-block">{{ form.is_department_manager.errors.0 }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check text-right">
+                            <label class="form-check-label font-weight-bold" for="{{ form.is_engineer.id_for_label }}">
+                                {{ form.is_engineer }}
+                                {{ form.is_engineer.label }}
+                            </label>
+                            <small class="text-danger d-block">{{ form.is_engineer.errors.0 }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="mb-0 font-weight-bold">
+                    <i class="material-icons align-middle text-danger ml-1">admin_panel_settings</i>
+                    صلاحية تهيئة النظام
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning mb-3">
+                    هذه الصلاحية تمنح المستخدم إدارة الموظفين، الأدوار، الصلاحيات، المباني، الطوابق، والأقسام.
+                </div>
+                <div class="form-check text-right">
+                    <label class="form-check-label font-weight-bold" for="{{ form.can_manage_system_setup.id_for_label }}">
+                        {{ form.can_manage_system_setup }}
+                        {{ form.can_manage_system_setup.label }}
+                    </label>
+                    <small class="text-danger d-block">{{ form.can_manage_system_setup.errors.0 }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="mb-0 font-weight-bold"><i class="material-icons align-middle text-primary ml-1">build</i> صلاحيات طلبات الصيانة</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    {% for field in form %}
+                        {% if field.name == 'can_add_maintenance' or field.name == 'can_approve_maintenance' or field.name == 'can_edit_pending_maintenance' or field.name == 'can_view_all_departments' or field.name == 'can_view_dashboard' %}
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check text-right">
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                        {{ field }}
+                                        {{ field.label }}
+                                    </label>
+                                    <small class="text-danger d-block">{{ field.errors.0 }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="mb-0 font-weight-bold"><i class="material-icons align-middle text-info ml-1">inventory_2</i> صلاحيات قطع الغيار</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-3">
+                    {% for field in form %}
+                        {% if field.name == 'can_add_spare_parts' or field.name == 'can_edit_delete_pending_parts' or field.name == 'can_issue_from_store' or field.name == 'can_confirm_issuance' %}
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check text-right">
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                        {{ field }}
+                                        {{ field.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="form-check text-right mb-3">
+                                <label class="form-check-label font-weight-bold" for="{{ form.can_approve_store_requisition.id_for_label }}">
+                                    {{ form.can_approve_store_requisition }}
+                                    {{ form.can_approve_store_requisition.label }}
+                                </label>
+                            </div>
+                            <div id="store-details" class="approval-details">
+                                <div class="form-group">
+                                    <label for="{{ form.store_approval_order.id_for_label }}">{{ form.store_approval_order.label }}</label>
+                                    {{ form.store_approval_order }}
+                                    <small class="text-danger">{{ form.store_approval_order.errors.0 }}</small>
+                                </div>
+                                <div id="store-bypass-wrapper" class="form-check text-right mb-3">
+                                    <label class="form-check-label" for="{{ form.can_bypass_store_approval.id_for_label }}">
+                                        {{ form.can_bypass_store_approval }}
+                                        {{ form.can_bypass_store_approval.label }}
+                                    </label>
+                                </div>
+                                <div id="store-max-wrapper" class="form-group">
+                                    <label for="{{ form.max_store_bypass_order.id_for_label }}">{{ form.max_store_bypass_order.label }}</label>
+                                    {{ form.max_store_bypass_order }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="form-check text-right mb-3">
+                                <label class="form-check-label font-weight-bold" for="{{ form.can_approve_purchase_order.id_for_label }}">
+                                    {{ form.can_approve_purchase_order }}
+                                    {{ form.can_approve_purchase_order.label }}
+                                </label>
+                            </div>
+                            <div id="purchase-details" class="approval-details">
+                                <div class="form-group">
+                                    <label for="{{ form.purchase_approval_order.id_for_label }}">{{ form.purchase_approval_order.label }}</label>
+                                    {{ form.purchase_approval_order }}
+                                    <small class="text-danger">{{ form.purchase_approval_order.errors.0 }}</small>
+                                </div>
+                                <div id="purchase-bypass-wrapper" class="form-check text-right mb-3">
+                                    <label class="form-check-label" for="{{ form.can_bypass_purchase_approval.id_for_label }}">
+                                        {{ form.can_bypass_purchase_approval }}
+                                        {{ form.can_bypass_purchase_approval.label }}
+                                    </label>
+                                </div>
+                                <div id="purchase-max-wrapper" class="form-group">
+                                    <label for="{{ form.max_purchase_bypass_order.id_for_label }}">{{ form.max_purchase_bypass_order.label }}</label>
+                                    {{ form.max_purchase_bypass_order }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-3">
+                <h5 class="mb-0 font-weight-bold"><i class="material-icons align-middle text-success ml-1">task_alt</i> صلاحيات تقارير الإنجاز</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row mb-3">
+                    {% for field in form %}
+                        {% if field.name == 'can_add_achievement_report' or field.name == 'can_edit_delete_pending_report' %}
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check text-right">
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                        {{ field }}
+                                        {{ field.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="border rounded p-3">
+                    <div class="form-check text-right mb-3">
+                        <label class="form-check-label font-weight-bold" for="{{ form.can_approve_achievement_report.id_for_label }}">
+                            {{ form.can_approve_achievement_report }}
+                            {{ form.can_approve_achievement_report.label }}
+                        </label>
+                    </div>
+                    <div id="achievement-details" class="approval-details">
+                        <div class="form-group">
+                            <label for="{{ form.achievement_approval_order.id_for_label }}">{{ form.achievement_approval_order.label }}</label>
+                            {{ form.achievement_approval_order }}
+                            <small class="text-danger">{{ form.achievement_approval_order.errors.0 }}</small>
+                        </div>
+                        <div id="achievement-bypass-wrapper" class="form-check text-right mb-3">
+                            <label class="form-check-label" for="{{ form.can_bypass_achievement_approval.id_for_label }}">
+                                {{ form.can_bypass_achievement_approval }}
+                                {{ form.can_bypass_achievement_approval.label }}
+                            </label>
+                        </div>
+                        <div id="achievement-max-wrapper" class="form-group">
+                            <label for="{{ form.max_achievement_bypass_order.id_for_label }}">{{ form.max_achievement_bypass_order.label }}</label>
+                            {{ form.max_achievement_bypass_order }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-left">
+            <a href="{% url 'roles' %}" class="btn btn-secondary">إلغاء</a>
+            <button type="submit" class="btn btn-success"><i class="material-icons align-middle ml-1">save</i> حفظ الصلاحيات</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const maintenanceApproval = document.getElementById("id_can_approve_maintenance");
+    const allDepartments = document.getElementById("id_can_view_all_departments");
+    const departmentManager = document.getElementById("id_is_department_manager");
+    const engineer = document.getElementById("id_is_engineer");
+
+    const departmentManagerDefaults = [
+        "id_can_add_maintenance",
+        "id_can_edit_pending_maintenance",
+        "id_can_approve_store_requisition",
+        "id_can_approve_purchase_order",
+        "id_can_approve_achievement_report"
+    ];
+
+    const engineerDefaults = [
+        "id_can_add_spare_parts",
+        "id_can_edit_delete_pending_parts",
+        "id_can_confirm_issuance",
+        "id_can_add_achievement_report",
+        "id_can_edit_delete_pending_report"
+    ];
+
+    function getField(fieldId) {
+        return document.getElementById(fieldId);
+    }
+
+    function setCheckboxChecked(checkbox, checked) {
+        if (!checkbox || checkbox.checked === checked) {
+            return;
+        }
+
+        checkbox.checked = checked;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function setDefaultPermissions(fieldIds, checked) {
+        fieldIds.forEach(function(fieldId) {
+            setCheckboxChecked(getField(fieldId), checked);
+        });
+    }
+
+    function applyDepartmentManagerDefaults() {
+        setDefaultPermissions(departmentManagerDefaults, departmentManager.checked);
+    }
+
+    function applyEngineerDefaults() {
+        setDefaultPermissions(engineerDefaults, engineer.checked);
+    }
+
+    function syncMaintenanceDependency() {
+        if (!maintenanceApproval || !allDepartments) {
+            return;
+        }
+
+        if (maintenanceApproval.checked) {
+            allDepartments.checked = true;
+            allDepartments.disabled = true;
+        } else {
+            allDepartments.disabled = false;
+        }
+    }
+
+    function populateBypassOptions(select, order) {
+        if (!select) {
+            return;
+        }
+
+        const selectedValue = select.value;
+        select.innerHTML = '<option value="">---------</option>';
+        for (let value = 1; value < order; value += 1) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            option.selected = String(value) === selectedValue;
+            select.appendChild(option);
+        }
+    }
+
+    function setupApprovalStructure(config) {
+        const approve = getField(config.approve);
+        const details = getField(config.details);
+        const order = getField(config.order);
+        const bypass = getField(config.bypass);
+        const bypassWrapper = getField(config.bypassWrapper);
+        const maxBypass = getField(config.maxBypass);
+        const maxWrapper = getField(config.maxWrapper);
+
+        if (!approve || !details || !order || !bypass || !bypassWrapper || !maxBypass || !maxWrapper) {
+            return;
+        }
+
+        function sync() {
+            const selectedOrder = Number(order.value);
+            details.classList.toggle("d-none", !approve.checked);
+            bypassWrapper.classList.toggle("d-none", !approve.checked || selectedOrder < 2);
+
+            if (!approve.checked || selectedOrder < 2) {
+                bypass.checked = false;
+            }
+
+            populateBypassOptions(maxBypass, selectedOrder);
+            maxWrapper.classList.toggle("d-none", !approve.checked || !bypass.checked || selectedOrder < 2);
+        }
+
+        approve.addEventListener("change", sync);
+        order.addEventListener("change", sync);
+        bypass.addEventListener("change", sync);
+        sync();
+    }
+
+    if (departmentManager) {
+        departmentManager.addEventListener("change", applyDepartmentManagerDefaults);
+    }
+
+    if (engineer) {
+        engineer.addEventListener("change", applyEngineerDefaults);
+    }
+
+    if (maintenanceApproval) {
+        maintenanceApproval.addEventListener("change", syncMaintenanceDependency);
+    }
+    syncMaintenanceDependency();
+
+    setupApprovalStructure({
+        approve: "id_can_approve_store_requisition",
+        details: "store-details",
+        order: "id_store_approval_order",
+        bypass: "id_can_bypass_store_approval",
+        bypassWrapper: "store-bypass-wrapper",
+        maxBypass: "id_max_store_bypass_order",
+        maxWrapper: "store-max-wrapper"
+    });
+
+    setupApprovalStructure({
+        approve: "id_can_approve_purchase_order",
+        details: "purchase-details",
+        order: "id_purchase_approval_order",
+        bypass: "id_can_bypass_purchase_approval",
+        bypassWrapper: "purchase-bypass-wrapper",
+        maxBypass: "id_max_purchase_bypass_order",
+        maxWrapper: "purchase-max-wrapper"
+    });
+
+    setupApprovalStructure({
+        approve: "id_can_approve_achievement_report",
+        details: "achievement-details",
+        order: "id_achievement_approval_order",
+        bypass: "id_can_bypass_achievement_approval",
+        bypassWrapper: "achievement-bypass-wrapper",
+        maxBypass: "id_max_achievement_bypass_order",
+        maxWrapper: "achievement-max-wrapper"
+    });
+});
+</script>
+{% endblock content %}

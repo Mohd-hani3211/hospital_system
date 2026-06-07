@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block title %}
+
+<span class="title"> قائمة الموظفين </span>
+{% endblock title %}
+
+{% block content %}
+
+
+
+<div class='card'>
+    <div class="card-header card-header-icon card-header-primary">
+        <div class="card-icon icon">
+            <i class="material-icons">assignment</i>
+        </div>
+         <div class=" float-right">
+                <a href="{% url "add_employee" %}" class="btn btn-sm  btn-primary btn-round" style="margin-top: -10px;">
+                      
+                    <i class="material-icons">add</i>
+                </a>
+            </div>
+            
+        <h4 class="card-title "> قائمة الموضفين  </h4>
+    </div>
+    <div class="card-body table-full-width">
+        <div class="table-responsive">
+            <table class="table table-striped table-sm table-hover-me">
+                <thead class="">
+                    <th class="d-none d-sm-table-cell">
+                        ID
+                    </th>
+                    <th class="text-center">
+                        الاسم
+                    </th>
+                    <th class="text-center">
+                         المنصب
+                    </th>
+
+                    <th class="text-center">
+                        القسم
+                    </th>
+                    <th class=" text-center d-none d-sm-table-cell">
+                         حالة الحساب
+                    </th>
+
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr class="clickable-row" data-href="{% url 'employee_detail' employee.id %}">
+                        <td class="d-none d-sm-table-cell">
+                            {{ employee.id }}
+                        </td>
+                        <td class="text-center">
+                                {{ employee.get_full_name }}
+                        </td>
+                        <td class="text-center">
+                            {{ employee.profile.job_title.title_name|default:"بدون مسمى وظيفي" }}
+                        </td>
+                        <td class="text-center">
+                            {{ employee.profile.managing_department.name|default:"غير محدد" }}
+                        </td>
+                        <td class=" text-center d-none d-sm-table-cell">
+                            {% if employee.is_active %}
+                            <span class="badge badge-success">نشط</span>
+                            {% else %}
+                            <span class="badge badge-danger">غير نشط</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                   
+            
+                </tbody>
+
+            </table>
+           
+        </div>
+    </div>
+                
+</div>
+
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // البحث عن كل الصفوف التي تحتوي على كلاس clickable-row
+        const rows = document.querySelectorAll(".clickable-row");
+        
+        rows.forEach(row => {
+            row.addEventListener("click", function() {
+                // الحصول على الرابط من خاصية data-href
+                const url = this.getAttribute("data-href");
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,157 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="apple-touch-icon" sizes="76x76" href="{% static 'img/apple-icon.png' %}">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>{{ system_settings.system_name|default:"نظام إدارة الصيانة الطبية" }}</title>
+  <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+  <meta name="description" content="{{ system_settings.organization_name|default:system_settings.system_name|default:'نظام إدارة الصيانة الطبية' }}">
+  <meta property="og:title" content="{{ system_settings.system_name|default:'نظام إدارة الصيانة الطبية' }}" />
+  <meta property="og:description" content="{{ system_settings.organization_name|default:'إدارة طلبات الصيانة وقطع الغيار ومتابعة فرق الصيانة.' }}" />
+  <meta property="og:site_name" content="{{ system_settings.organization_name|default:system_settings.system_name|default:'نظام إدارة الصيانة الطبية' }}" />
+
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Tajawal:300,400,500,700,800|Roboto:300,400,500,700|Material+Icons" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+  <link href="{% static 'css/material-dashboard.min.css' %}?v=2.1.0" rel="stylesheet" />
+  <link href="{% static 'css/hospital-theme.css' %}" rel="stylesheet" />
+</head>
+
+<body class="hospital-login-page rtl">
+  {% with display_name=system_settings.organization_name|default:system_settings.system_name|default:"نظام إدارة الصيانة الطبية" system_name=system_settings.system_name|default:"نظام إدارة الصيانة الطبية" %}
+    <nav class="login-navbar" aria-label="شريط هوية النظام">
+      <a class="login-navbar-brand" href="{% url 'login' %}">
+        <span class="login-navbar-logo">
+          {% if system_settings.logo %}
+            <img src="{{ system_settings.logo.url }}" alt="{{ display_name }}">
+          {% else %}
+            <i class="material-icons">local_hospital</i>
+          {% endif %}
+        </span>
+        <span>
+          <strong>{{ display_name }}</strong>
+          <small>{{ system_name }}</small>
+        </span>
+      </a>
+    </nav>
+
+    <main class="login-shell">
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="login-hero">
+          <div class="login-hero-badge">
+            <i class="material-icons">health_and_safety</i>
+            بيئة صيانة طبية موثوقة
+          </div>
+          <h1>{{ system_name }}</h1>
+          <p>إدارة طلبات الصيانة وقطع الغيار ومتابعة أعمال فرق الصيانة بكفاءة ووضوح داخل بيئة مؤسسية واحدة.</p>
+
+          <div class="login-feature-grid">
+            <div class="login-feature-card">
+              <i class="material-icons">assignment_turned_in</i>
+              <span>متابعة دورة الطلب</span>
+            </div>
+            <div class="login-feature-card">
+              <i class="material-icons">inventory_2</i>
+              <span>إدارة قطع الغيار</span>
+            </div>
+            <div class="login-feature-card">
+              <i class="material-icons">verified_user</i>
+              <span>صلاحيات مؤسسية</span>
+            </div>
+          </div>
+        </div>
+
+        <form class="login-card" method="post" action="" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+
+          <div class="login-card-header">
+            <div class="login-brand-mark">
+              {% if system_settings.logo %}
+                <img src="{{ system_settings.logo.url }}" alt="{{ display_name }}">
+              {% else %}
+                <i class="material-icons">local_hospital</i>
+              {% endif %}
+            </div>
+            <span class="login-eyebrow">تسجيل الدخول</span>
+            <h2 id="login-title">{{ display_name }}</h2>
+            <p>أدخل بيانات حسابك للوصول إلى لوحة إدارة الصيانة.</p>
+          </div>
+
+          {% if messages %}
+            <div class="login-messages">
+              {% for message in messages %}
+                <div class="alert login-alert alert-{{ message.tags }} mb-2" role="alert">
+                  <i class="material-icons">info</i>
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="login-form-group">
+            <label for="login-username">اسم المستخدم</label>
+            <div class="login-input-wrap">
+              <i class="material-icons login-input-icon">person_outline</i>
+              <input id="login-username" type="text" class="form-control login-control" placeholder="أدخل اسم المستخدم" name="username" value="{{ username }}" autocomplete="username" required autofocus>
+            </div>
+          </div>
+
+          <div class="login-form-group">
+            <label for="login-password">كلمة المرور</label>
+            <div class="login-input-wrap">
+              <i class="material-icons login-input-icon">lock_outline</i>
+              <input id="login-password" type="password" class="form-control login-control" placeholder="أدخل كلمة المرور" name="password" autocomplete="current-password" required>
+              <button class="login-password-toggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false" data-target="login-password">
+                <i class="material-icons">visibility</i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn login-submit-btn btn-block">
+            <i class="material-icons">login</i>
+            تسجيل الدخول
+          </button>
+
+          <div class="login-support-note">
+            <i class="material-icons">support_agent</i>
+            في حال تعذر الدخول، تواصل مع مسؤول النظام في الجهة.
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="login-footer">
+      <span>Version {{ system_version|default:"1.0" }}</span>
+      <span>© {% now "Y" %} {{ display_name }}</span>
+    </footer>
+  {% endwith %}
+
+  <script src="{% static 'js/core/jquery.min.js' %}"></script>
+  <script src="{% static 'js/core/popper.min.js' %}"></script>
+  <script src="{% static 'js/core/bootstrap-material-design.min.js' %}"></script>
+  <script src="{% static 'js/plugins/perfect-scrollbar.jquery.min.js' %}"></script>
+  <script src="{% static 'js/material-dashboard.min.js' %}?v=2.1.0" type="text/javascript"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".login-password-toggle").forEach(function(button) {
+        button.addEventListener("click", function() {
+          var input = document.getElementById(button.dataset.target);
+          var icon = button.querySelector(".material-icons");
+          var showPassword = input.type === "password";
+          input.type = showPassword ? "text" : "password";
+          button.setAttribute("aria-pressed", showPassword ? "true" : "false");
+          button.setAttribute("aria-label", showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
+          icon.textContent = showPassword ? "visibility_off" : "visibility";
+          input.focus();
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title font-weight-bold">الإشعارات</span>
+{% endblock title %}
+
+{% block content %}
+<style>
+  .notifications-page {
+    direction: rtl;
+  }
+  .notification-row {
+    border-bottom: 1px solid #eee;
+    transition: background-color .15s ease;
+  }
+  .notification-row.unread {
+    background: #fff8e1;
+  }
+  .notification-row:hover {
+    background: #f7f7f7;
+  }
+  .notification-title {
+    font-weight: 700;
+    color: #263238;
+  }
+  .notification-message {
+    color: #607d8b;
+  }
+  .notification-time {
+    white-space: nowrap;
+    color: #78909c;
+    font-size: .85rem;
+  }
+</style>
+
+<div class="container-fluid notifications-page">
+  <div class="card">
+    <div class="card-header card-header-primary d-flex justify-content-between align-items-center flex-wrap">
+      <div>
+        <h4 class="card-title mb-0">كل الإشعارات</h4>
+        <p class="card-category mb-0">تابع آخر أحداث طلبات الصيانة وقطع الغيار وتقارير الإنجاز</p>
+      </div>
+      <form method="post" action="{% url 'mark_all_notifications_as_read' %}" class="mt-2 mt-md-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-white btn-sm">
+          <i class="material-icons align-middle ml-1">done_all</i>
+          تعليم الكل كمقروء
+        </button>
+      </form>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <a href="{% url 'notifications_list' %}" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">الكل</a>
+        <a href="{% url 'notifications_list' %}?status=unread" class="btn btn-sm {% if status_filter == 'unread' %}btn-primary{% else %}btn-outline-primary{% endif %}">غير المقروء</a>
+        <a href="{% url 'notifications_list' %}?status=read" class="btn btn-sm {% if status_filter == 'read' %}btn-primary{% else %}btn-outline-primary{% endif %}">المقروء</a>
+      </div>
+
+      {% for notification in notifications %}
+        <div class="notification-row {% if not notification.is_read %}unread{% endif %} p-3">
+          <div class="row align-items-center">
+            <div class="col-lg-8 mb-2 mb-lg-0">
+              <a href="{% url 'notification_redirect' notification.pk %}" class="notification-title d-block">
+                {{ notification.title }}
+              </a>
+              <div class="notification-message">{{ notification.message }}</div>
+            </div>
+            <div class="col-lg-2 mb-2 mb-lg-0 notification-time">
+              {{ notification.created_at|date:"Y-m-d H:i" }}
+            </div>
+            <div class="col-lg-2 text-left">
+              {% if not notification.is_read %}
+                <form method="post" action="{% url 'mark_notification_as_read' notification.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="material-icons align-middle ml-1">done</i>
+                    مقروء
+                  </button>
+                </form>
+              {% else %}
+                <span class="badge badge-secondary">مقروء</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-center text-muted py-5">لا توجد إشعارات لعرضها.</div>
+      {% endfor %}
+
+      {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">السابق</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">التالي</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

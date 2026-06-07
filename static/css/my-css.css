@@ -1,0 +1,32 @@
+@media (max-width: 576px) {
+    .title {
+        font-weight: bold;
+        margin: 15px;
+        font-size: 24px;
+    }
+        .icon {
+            display: none;
+        }
+
+         .delete-form {
+        display: block;
+        }
+       
+   
+
+}
+
+@media (min-width: 577px) {
+    .title {
+        font-weight: bold;
+        margin: 15px;
+        font-size: 32px;
+    }
+    .icon {
+        font-size: 24px;
+    }
+     .delete-form {
+        display: inline;
+        }
+
+}

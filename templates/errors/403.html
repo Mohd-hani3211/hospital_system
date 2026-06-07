@@ -1,0 +1,13 @@
+{% extends "errors/base_error.html" %}
+
+{% block error_title %}ليس لديك صلاحية الوصول{% endblock %}
+{% block error_icon %}lock{% endblock %}
+{% block error_code %}403{% endblock %}
+{% block heading %}ليس لديك صلاحية الوصول{% endblock %}
+{% block message %}لا تملك الصلاحية الكافية للوصول إلى هذه الصفحة أو تنفيذ هذا الإجراء.{% endblock %}
+{% block extra_action %}
+  <button type="button" class="btn btn-outline-secondary" onclick="window.history.back();">
+    <i class="material-icons align-middle ml-1">arrow_back</i>
+    الرجوع للخلف
+  </button>
+{% endblock %}

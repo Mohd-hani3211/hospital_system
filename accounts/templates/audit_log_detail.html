@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content">
+  <div class="container-fluid" dir="rtl">
+    <div class="row">
+      <div class="col-lg-10 ml-auto mr-auto">
+        <div class="card">
+          <div class="card-header card-header-primary d-flex justify-content-between align-items-center">
+            <div>
+              <h4 class="card-title mb-0">تفاصيل العملية</h4>
+              <p class="card-category mb-0">{{ audit_log.created_at|date:"Y-m-d H:i:s" }}</p>
+            </div>
+            <a href="{% url 'audit_logs' %}" class="btn btn-sm btn-white">رجوع</a>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table">
+                  <tr>
+                    <th>المستخدم</th>
+                    <td>{{ audit_log.user.get_full_name|default:audit_log.user.username|default:"النظام" }}</td>
+                  </tr>
+                  <tr>
+                    <th>عنوان IP</th>
+                    <td>{{ audit_log.ip_address|default:"غير متاح" }}</td>
+                  </tr>
+                  <tr>
+                    <th>نوع العملية</th>
+                    <td><span class="badge badge-info">{{ audit_log.get_action_type_display }}</span></td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table">
+                  <tr>
+                    <th>الموديل</th>
+                    <td>{{ audit_log.model_name }}</td>
+                  </tr>
+                  <tr>
+                    <th>معرف الكائن</th>
+                    <td>{{ audit_log.object_id|default:"-" }}</td>
+                  </tr>
+                  <tr>
+                    <th>الكائن</th>
+                    <td>{{ audit_log.object_repr|default:"-" }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="alert alert-info mt-3">{{ audit_log.description|default:"لا يوجد وصف إضافي." }}</div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <h5 class="font-weight-bold">البيانات القديمة</h5>
+                <pre class="bg-light border rounded p-3 text-left" dir="ltr" style="white-space: pre-wrap; min-height: 180px;">{{ audit_log.old_data|default:"{}" }}</pre>
+              </div>
+              <div class="col-md-6 mb-3">
+                <h5 class="font-weight-bold">البيانات الجديدة</h5>
+                <pre class="bg-light border rounded p-3 text-left" dir="ltr" style="white-space: pre-wrap; min-height: 180px;">{{ audit_log.new_data|default:"{}" }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

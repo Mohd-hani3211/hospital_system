@@ -1,0 +1,35 @@
+from django.urls import path
+from . import views
+urlpatterns = [
+    path('', views.home_redirect, name='home'),
+    path('home/', views.home_redirect, name='home_redirect'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('accounts/employees/', views.EmployeesList.as_view(), name='employees'),
+    path('accounts/employees/add/', views.AddEmployee, name='add_employee'),
+    path('accounts/employees/edit/<int:pk>/', views.EditEmployee, name='edit_employee'),
+    path('accounts/employees/delete/<int:pk>/', views.DeleteEmployee, name='delete_employee'),
+    path('accounts/employees/toggle-active/<int:pk>/', views.ToggleEmployeeActive, name='toggle_employee_active'),
+    path('accounts/employee/<int:pk>/', views.EmployeeDetail, name='employee_detail'),
+    path('accounts/roles/', views.JobTitlesList.as_view(), name='roles'),
+    path('accounts/roles/add/', views.AddJobTitle.as_view(), name='add_role'),
+    path('accounts/roles/edit/<int:pk>/', views.EditJobTitle.as_view(), name='edit_role'),
+    path('accounts/roles/delete/<int:pk>/', views.DeleteJobTitle.as_view(), name='delete_role'),
+    path('accounts/roles/<int:pk>/permissions/', views.EditJobTitlePermissions, name='job_title_permissions'),
+    path('accounts/specialties/', views.SpecialtiesList.as_view(), name='specialties'),
+    path('accounts/specialties/add/', views.AddSpecialty.as_view(), name='add_specialty'),
+    path('accounts/specialties/edit/<int:pk>/', views.EditSpecialty.as_view(), name='edit_specialty'),
+    path('accounts/specialties/delete/<int:pk>/', views.DeleteSpecialty.as_view(), name='delete_specialty'),  
+    path('accounts/login/', views.LoginView, name='login'),
+    path('accounts/logout/', views.logout_view, name='logout'),
+
+
+    path('accounts/employee/profile', views.Profile, name='profile'),  
+    path('accounts/profile/change-password/', views.change_my_password, name='change_my_password'),
+    path('accounts/audit-logs/', views.AuditLogListView.as_view(), name='audit_logs'),
+    path('accounts/audit-logs/<int:pk>/', views.AuditLogDetailView.as_view(), name='audit_log_detail'),
+    path('system/backups/', views.backup_list, name='backup_list'),
+    path('system/backups/create/', views.create_backup, name='create_backup'),
+    path('system/backups/download/<str:filename>/', views.download_backup, name='download_backup'),
+    path('system/backups/delete/<str:filename>/', views.delete_backup, name='delete_backup'),
+    path('system/settings/', views.system_settings_view, name='system_settings'),
+]

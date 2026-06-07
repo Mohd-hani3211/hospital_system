@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title" style="font-weight: bold;">{{ list_title }}</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mb-5" style="direction: rtl;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 p-3" style="border-radius: 8px; background: #fff;">
+                <h4 class="font-weight-bold text-dark mb-1">{{ list_title }}</h4>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;">{{ list_description }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for object in objects %}
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="card shadow-sm border-0 mb-4" style="border-radius: 8px;">
+                    <div class="card-header bg-white border-bottom p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="text-right">
+                                <h5 class="font-weight-bold text-dark mb-1">طلب صيانة #{{ object.id }}</h5>
+                                <small class="text-muted">{{ object.required_specialty.name }} - {{ object.department.name }}</small>
+                            </div>
+                            {% if object.status == 'completed' %}
+                                <span class="badge badge-success px-2 py-1">{{ object.get_status_display }}</span>
+                            {% elif object.status == 'rejected' %}
+                                <span class="badge badge-danger px-2 py-1">{{ object.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body text-right p-3">
+                        <div class="mb-2">
+                            <small class="text-muted d-block">تاريخ الإنشاء</small>
+                            <span class="font-weight-bold text-dark">{{ object.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">تاريخ الإكمال</small>
+                            {% if object.completed_at %}
+                                <span class="font-weight-bold text-success">{{ object.completed_at|date:"Y-m-d H:i" }}</span>
+                            {% else %}
+                                <span class="text-muted">غير مسجل</span>
+                            {% endif %}
+                        </div>
+                        {% if object.status == 'completed' %}
+                            <div class="mb-2">
+                                <small class="text-muted d-block">مدة التنفيذ</small>
+                                {% if object.completed_at %}
+                                    <span class="font-weight-bold text-dark">{{ object.created_at|timesince:object.completed_at }}</span>
+                                {% else %}
+                                    <span class="text-muted">غير متاحة</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if object.status == 'rejected' %}
+                            <div class="mb-2">
+                                <small class="text-muted d-block">سبب الرفض</small>
+                                <span class="text-dark">{{ object.rejected_reason|default:object.cause|default:"لم يسجل سبب الرفض." }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="mb-2">
+                            <small class="text-muted d-block">المهندس المكلف</small>
+                            {% if object.assigned_technician %}
+                                <span class="font-weight-bold text-dark">{{ object.assigned_technician.user.get_full_name|default:object.assigned_technician.user.username }}</span>
+                            {% else %}
+                                <span class="text-muted">لم يتم تعيين مهندس</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top text-left">
+                        <a href="{% url 'request_maintenance_details' object.pk %}" class="btn btn-link btn-info btn-sm mb-0">
+                            تفاصيل أكثر
+                            <i class="material-icons align-middle" style="font-size: 16px;">more</i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <div class="card shadow-sm border-0 p-5" style="border-radius: 8px; background: #fff;">
+                    <i class="material-icons text-muted" style="font-size: 56px;">history</i>
+                    <h5 class="text-muted mt-3 font-weight-bold">لا توجد طلبات مكتملة أو مرفوضة حالياً</h5>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

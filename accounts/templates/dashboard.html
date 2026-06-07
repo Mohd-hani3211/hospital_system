@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<span class="title">لوحة نظام صيانة المستشفى</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid" dir="rtl">
+  <div class="card hospital-dashboard-hero mb-4">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-lg-8 text-right">
+          <span class="badge badge-primary mb-3">Hospital CMMS</span>
+          <h3 class="font-weight-bold mb-2">{{ system_settings.system_name|default:"نظام إدارة صيانة المستشفى" }}</h3>
+          <p class="text-muted mb-0">
+            منصة موحدة لإدارة طلبات الصيانة، قطع الغيار، تقارير الإنجاز، وسجل العمليات داخل بيئة صحية مؤسسية.
+          </p>
+        </div>
+        <div class="col-lg-4 text-lg-left text-right mt-3 mt-lg-0">
+          <a href="{% url 'maintenance_dashboard' %}" class="btn btn-primary">
+            <i class="material-icons align-middle ml-1">monitoring</i>
+            فتح لوحة مؤشرات الصيانة
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-right">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white mb-3" style="width:48px;height:48px;">
+            <i class="material-icons">engineering</i>
+          </div>
+          <h5 class="font-weight-bold">إدارة طلبات الصيانة</h5>
+          <p class="text-muted mb-3">متابعة دورة حياة الطلب من البلاغ حتى الإغلاق والتعميد.</p>
+          <a href="{% url 'request_list' %}" class="btn btn-outline-primary btn-sm">عرض الطلبات</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-right">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white mb-3" style="width:48px;height:48px;">
+            <i class="material-icons">inventory_2</i>
+          </div>
+          <h5 class="font-weight-bold">طلبات قطع الغيار</h5>
+          <p class="text-muted mb-3">متابعة طلبات الصرف والشراء وتعميدها بمستويات واضحة.</p>
+          <a href="{% url 'spare_part_list' %}" class="btn btn-outline-primary btn-sm">عرض طلبات القطع</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-right">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success text-white mb-3" style="width:48px;height:48px;">
+            <i class="material-icons">verified</i>
+          </div>
+          <h5 class="font-weight-bold">الحوكمة وسجل العمليات</h5>
+          <p class="text-muted mb-3">تتبع الصلاحيات، الاعتمادات، والعمليات الحساسة داخل النظام.</p>
+          <a href="{% url 'audit_logs' %}" class="btn btn-outline-primary btn-sm">عرض سجل العمليات</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
