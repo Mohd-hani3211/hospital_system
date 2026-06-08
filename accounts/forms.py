@@ -277,7 +277,7 @@ class SystemSettingsForm(forms.ModelForm):
         widgets = {
             'system_name': forms.TextInput(attrs={'class': 'form-control'}),
             'organization_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'logo': forms.ClearableFileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
+            'logo': forms.FileInput(attrs={'class': 'hospital-logo-input', 'accept': 'image/*'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),

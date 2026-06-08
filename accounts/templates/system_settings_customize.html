@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title">تخصيص إعدادات النظام</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4" dir="rtl">
+  <div class="hospital-page-header p-4 mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-8 text-right mb-3 mb-lg-0">
+        <span class="hospital-section-eyebrow d-block mb-1">تعديل الهوية المؤسسية ومعلومات التواصل</span>
+        <h2 class="mb-2">تخصيص إعدادات النظام</h2>
+        <p class="text-muted mb-0">عدّل القيم الجديدة مع بقاء الإعدادات الحالية ظاهرة للمراجعة.</p>
+      </div>
+      <div class="col-lg-4 text-lg-left text-right">
+        <a class="btn btn-outline-secondary" href="{% url 'system_settings' %}">
+          <i class="material-icons align-middle ml-1">arrow_back</i>
+          العودة لعرض الإعدادات
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs system-settings-tabs justify-content-start mb-4" id="systemSettingsTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'system_settings' %}">
+        <i class="material-icons align-middle ml-1">visibility</i>
+        عرض الإعدادات
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'system_settings_customize' %}" aria-current="page">
+        <i class="material-icons align-middle ml-1">tune</i>
+        تخصيص إعدادات النظام
+      </a>
+    </li>
+  </ul>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger text-right">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100 hospital-current-settings-card">
+          <div class="card-header bg-white">
+            <h4 class="card-title mb-0">
+              <i class="material-icons align-middle text-primary ml-1">history</i>
+              الإعدادات الحالية
+            </h4>
+          </div>
+          <div class="card-body text-right">
+            <div class="text-center mb-4">
+              {% if settings_obj.logo %}
+                <img src="{{ settings_obj.logo.url }}" alt="{{ settings_obj.system_name }}" class="hospital-settings-logo mb-3">
+              {% else %}
+                <div class="hospital-settings-logo d-inline-flex align-items-center justify-content-center mb-3">
+                  <i class="material-icons text-muted" style="font-size: 52px;">local_hospital</i>
+                </div>
+              {% endif %}
+              <h5 class="font-weight-bold mb-1">{{ settings_obj.system_name|default:"طلبات الصيانة" }}</h5>
+              <small class="text-muted">{{ settings_obj.organization_name|default:"اسم الجهة غير محدد" }}</small>
+            </div>
+
+            <div class="hospital-settings-current-item">
+              <small>رقم الهاتف</small>
+              <strong>{{ settings_obj.phone|default:"غير محدد" }}</strong>
+            </div>
+            <div class="hospital-settings-current-item">
+              <small>البريد الإلكتروني</small>
+              <strong class="text-break">{{ settings_obj.email|default:"غير محدد" }}</strong>
+            </div>
+            <div class="hospital-settings-current-item">
+              <small>العنوان</small>
+              <strong>{{ settings_obj.address|default:"غير محدد" }}</strong>
+            </div>
+            <div class="hospital-settings-current-item">
+              <small>نص الفوتر</small>
+              <strong>{{ settings_obj.footer_text|default:"غير محدد" }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8 mb-4">
+        <div class="card mb-4">
+          <div class="card-header bg-white">
+            <h4 class="card-title mb-0">
+              <i class="material-icons align-middle text-primary ml-1">business</i>
+              الهوية الجديدة
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="form-group text-right">
+              <label class="font-weight-bold d-block">{{ form.logo.label }}</label>
+              <div class="hospital-logo-upload-box">
+                <div class="hospital-logo-upload-icon">
+                  <i class="material-icons">cloud_upload</i>
+                </div>
+                <div class="hospital-logo-upload-content">
+                  <strong class="d-block mb-1">رفع شعار جديد</strong>
+                  <small class="text-muted d-block mb-2">اختر صورة بصيغة PNG أو JPG لعرضها في النظام.</small>
+                  {{ form.logo }}
+                  <small class="hospital-logo-file-name text-muted d-block mt-2" id="logoFileName">لم يتم اختيار ملف جديد</small>
+                </div>
+              </div>
+              {% if form.logo.errors %}<small class="text-danger d-block">{{ form.logo.errors }}</small>{% endif %}
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label>{{ form.system_name.label }}</label>
+                {{ form.system_name }}
+                {% if form.system_name.errors %}<small class="text-danger d-block">{{ form.system_name.errors }}</small>{% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label>{{ form.organization_name.label }}</label>
+                {{ form.organization_name }}
+                {% if form.organization_name.errors %}<small class="text-danger d-block">{{ form.organization_name.errors }}</small>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-white">
+            <h4 class="card-title mb-0">
+              <i class="material-icons align-middle text-primary ml-1">contact_phone</i>
+              بيانات التواصل الجديدة
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label>{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<small class="text-danger d-block">{{ form.phone.errors }}</small>{% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label>{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<small class="text-danger d-block">{{ form.email.errors }}</small>{% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label>{{ form.address.label }}</label>
+                {{ form.address }}
+                {% if form.address.errors %}<small class="text-danger d-block">{{ form.address.errors }}</small>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-white">
+            <h4 class="card-title mb-0">
+              <i class="material-icons align-middle text-primary ml-1">notes</i>
+              النصوص والسياسات الجديدة
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label>{{ form.footer_text.label }}</label>
+                {{ form.footer_text }}
+                {% if form.footer_text.errors %}<small class="text-danger d-block">{{ form.footer_text.errors }}</small>{% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label>{{ form.maintenance_policy_notes.label }}</label>
+                {{ form.maintenance_policy_notes }}
+                {% if form.maintenance_policy_notes.errors %}<small class="text-danger d-block">{{ form.maintenance_policy_notes.errors }}</small>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-end mb-4" style="gap: 10px;">
+          <a class="btn btn-secondary" href="{% url 'system_settings' %}">إلغاء</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="material-icons align-middle ml-1">save</i>
+            حفظ التخصيصات
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var logoInput = document.getElementById("id_logo");
+  var fileName = document.getElementById("logoFileName");
+
+  if (logoInput && fileName) {
+    logoInput.addEventListener("change", function() {
+      fileName.textContent = logoInput.files && logoInput.files.length
+        ? logoInput.files[0].name
+        : "لم يتم اختيار ملف جديد";
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -793,6 +793,39 @@ label {
   background: transparent;
 }
 
+.system-settings-tabs {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 0;
+  background: #fff;
+  border: 1px solid var(--hmms-border);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: var(--hmms-shadow);
+}
+
+.system-settings-tabs .nav-item {
+  margin-bottom: 0;
+}
+
+.system-settings-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--hmms-muted);
+  padding: 10px 16px;
+}
+
+.system-settings-tabs .nav-link.active,
+.system-settings-tabs .nav-link:hover {
+  color: var(--hmms-primary);
+  background: #EAF4FF;
+  border-color: #CFE8FF;
+}
+
 .hospital-messages {
   position: fixed;
   top: 84px;
@@ -904,6 +937,99 @@ body.sidebar-mini .hospital-messages {
   background: #fff;
   border: 1px solid var(--hmms-border);
   padding: 10px;
+}
+
+.hospital-current-settings-card {
+  position: sticky;
+  top: 96px;
+}
+
+.hospital-settings-current-item {
+  border: 1px solid var(--hmms-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #F8FAFC;
+}
+
+.hospital-settings-current-item small {
+  display: block;
+  color: var(--hmms-muted);
+  margin-bottom: 4px;
+}
+
+.hospital-settings-current-item strong {
+  display: block;
+  color: var(--hmms-text);
+}
+
+.hospital-logo-upload-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px dashed #BFD7EF;
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(135deg, #F8FAFC, #EEF7FF);
+}
+
+.hospital-logo-upload-icon {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: #EAF4FF;
+  color: var(--hmms-primary);
+}
+
+.hospital-logo-upload-icon .material-icons {
+  font-size: 30px;
+}
+
+.hospital-logo-upload-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hospital-logo-upload-box .hospital-logo-input,
+.form-group .hospital-logo-upload-box input[type=file] {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: 2 !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  opacity: 1 !important;
+  cursor: pointer;
+  border: 1px solid var(--hmms-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.hospital-logo-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 991.98px) {
+  .hospital-current-settings-card {
+    position: static;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hospital-logo-upload-box {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 /* Login Page */

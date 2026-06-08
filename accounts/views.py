@@ -333,7 +333,18 @@ def delete_backup(request, filename):
 def system_settings_view(request):
     require_system_admin(request)
     settings_obj = SystemSettings.get_solo()
+    return render(request, 'system_settings.html', {
+        'title': 'إعدادات النظام',
+        'settings_obj': settings_obj,
+    })
+
+
+@login_required(login_url='login')
+def system_settings_customize_view(request):
+    require_system_admin(request)
+    settings_obj = SystemSettings.get_solo()
     old_data = serialize_instance(settings_obj)
+
     if request.method == 'POST':
         form = SystemSettingsForm(request.POST, request.FILES, instance=settings_obj)
         if form.is_valid():
@@ -344,16 +355,17 @@ def system_settings_view(request):
                 settings_obj,
                 old_data=old_data,
                 new_data=serialize_instance(settings_obj),
-                description="تم تعديل إعدادات النظام العامة.",
+                description="تم تخصيص إعدادات النظام العامة.",
                 request=request,
             )
-            messages.success(request, "تم حفظ إعدادات النظام بنجاح.")
+            messages.success(request, "تم حفظ تخصيص إعدادات النظام بنجاح.")
             return redirect('system_settings')
         messages.error(request, "تعذر حفظ إعدادات النظام. يرجى مراجعة الحقول.")
     else:
         form = SystemSettingsForm(instance=settings_obj)
-    return render(request, 'system_settings.html', {
-        'title': 'إعدادات النظام',
+
+    return render(request, 'system_settings_customize.html', {
+        'title': 'تخصيص إعدادات النظام',
         'form': form,
         'settings_obj': settings_obj,
     })

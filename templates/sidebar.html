@@ -228,7 +228,7 @@
               <b class="caret"></b>
             </p>
           </a>
-          <div class="collapse {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' or current_url == 'backup_list' or current_url == 'system_settings' %}show{% endif %}" id="adminMenu">
+          <div class="collapse {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' or current_url == 'backup_list' or current_url == 'system_settings' or current_url == 'system_settings_customize' %}show{% endif %}" id="adminMenu">
             <ul class="nav">
               {% if perms.accounts.can_view_audit_log or role_perms.can_view_audit_log %}
                 <li class="nav-item {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' %}active{% endif %}">
@@ -245,7 +245,7 @@
                     <span class="sidebar-normal">النسخ الاحتياطي</span>
                   </a>
                 </li>
-                <li class="nav-item {% if current_url == 'system_settings' %}active{% endif %}">
+                <li class="nav-item {% if current_url == 'system_settings' or current_url == 'system_settings_customize' %}active{% endif %}">
                   <a class="nav-link" href="{% url 'system_settings' %}">
                     <span class="sidebar-mini">ض</span>
                     <span class="sidebar-normal">إعدادات النظام</span>

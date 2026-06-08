@@ -32,4 +32,5 @@ urlpatterns = [
     path('system/backups/download/<str:filename>/', views.download_backup, name='download_backup'),
     path('system/backups/delete/<str:filename>/', views.delete_backup, name='delete_backup'),
     path('system/settings/', views.system_settings_view, name='system_settings'),
+    path('system/settings/customize/', views.system_settings_customize_view, name='system_settings_customize'),
 ]

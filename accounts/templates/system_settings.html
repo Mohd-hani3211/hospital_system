@@ -14,246 +14,114 @@
         <p class="text-muted mb-0">{{ settings_obj.organization_name|default:"لم يتم تحديد اسم الجهة بعد" }}</p>
       </div>
       <div class="col-lg-4 text-lg-left text-right">
-        <button class="btn btn-primary" type="button" data-settings-tab="settings-edit-tab">
+        <a class="btn btn-primary" href="{% url 'system_settings_customize' %}">
           <i class="material-icons align-middle ml-1">edit</i>
-          تعديل الإعدادات
-        </button>
+          تخصيص إعدادات النظام
+        </a>
       </div>
     </div>
   </div>
 
-  <ul class="nav nav-tabs justify-content-start mb-4" id="systemSettingsTabs" role="tablist">
+  <ul class="nav nav-tabs system-settings-tabs justify-content-start mb-4" id="systemSettingsTabs" role="tablist">
     <li class="nav-item">
-      <a class="nav-link {% if not form.errors %}active{% endif %}" id="settings-overview-tab" data-toggle="tab" href="#settings-overview" role="tab" aria-controls="settings-overview" aria-selected="{% if not form.errors %}true{% else %}false{% endif %}">
+      <a class="nav-link active" href="{% url 'system_settings' %}" aria-current="page">
+        <i class="material-icons align-middle ml-1">visibility</i>
         عرض الإعدادات
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link {% if form.errors %}active{% endif %}" id="settings-edit-tab" data-toggle="tab" href="#settings-edit" role="tab" aria-controls="settings-edit" aria-selected="{% if form.errors %}true{% else %}false{% endif %}">
-        تعديل الإعدادات
+      <a class="nav-link" href="{% url 'system_settings_customize' %}">
+        <i class="material-icons align-middle ml-1">tune</i>
+        تخصيص إعدادات النظام
       </a>
     </li>
   </ul>
 
-  <div class="tab-content" id="systemSettingsTabsContent">
-    <div class="tab-pane fade {% if not form.errors %}show active{% endif %}" id="settings-overview" role="tabpanel" aria-labelledby="settings-overview-tab">
-      <div class="row">
-        <div class="col-lg-4 mb-4">
-          <div class="card h-100">
-            <div class="card-body text-center p-4">
-              {% if settings_obj.logo %}
-                <img src="{{ settings_obj.logo.url }}" alt="{{ settings_obj.system_name }}" class="hospital-settings-logo mb-3">
-              {% else %}
-                <div class="hospital-settings-logo d-inline-flex align-items-center justify-content-center mb-3">
-                  <i class="material-icons text-muted" style="font-size: 52px;">local_hospital</i>
-                </div>
-              {% endif %}
-              <h4 class="font-weight-bold mb-2">{{ settings_obj.system_name|default:"طلبات الصيانة" }}</h4>
-              <p class="text-muted mb-0">{{ settings_obj.organization_name|default:"اسم الجهة غير محدد" }}</p>
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card h-100">
+        <div class="card-body text-center p-4">
+          {% if settings_obj.logo %}
+            <img src="{{ settings_obj.logo.url }}" alt="{{ settings_obj.system_name }}" class="hospital-settings-logo mb-3">
+          {% else %}
+            <div class="hospital-settings-logo d-inline-flex align-items-center text-dark justify-content-center mb-3">
+              <i class="material-icons text-muted" style="font-size: 52px; color: #000000ff;">local_hospital</i>
             </div>
-          </div>
-        </div>
-
-        <div class="col-lg-8 mb-4">
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <div class="hospital-info-card text-right h-100">
-                <i class="material-icons text-primary mb-2">phone</i>
-                <small class="text-muted d-block">رقم الهاتف</small>
-                <strong class="d-block mt-1">{{ settings_obj.phone|default:"غير محدد" }}</strong>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <div class="hospital-info-card text-right h-100">
-                <i class="material-icons text-primary mb-2">email</i>
-                <small class="text-muted d-block">البريد الإلكتروني</small>
-                <strong class="d-block mt-1 text-break">{{ settings_obj.email|default:"غير محدد" }}</strong>
-              </div>
-            </div>
-            <div class="col-md-4 mb-3">
-              <div class="hospital-info-card text-right h-100">
-                <i class="material-icons text-primary mb-2">location_on</i>
-                <small class="text-muted d-block">العنوان</small>
-                <strong class="d-block mt-1">{{ settings_obj.address|default:"غير محدد" }}</strong>
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="hospital-info-card text-right h-100">
-                <i class="material-icons text-success mb-2">schedule</i>
-                <small class="text-muted d-block">آخر تحديث</small>
-                <strong class="d-block mt-1">{{ settings_obj.updated_at|date:"Y-m-d H:i"|default:"غير متاح" }}</strong>
-              </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <div class="hospital-info-card text-right h-100">
-                <i class="material-icons text-primary mb-2">person</i>
-                <small class="text-muted d-block">آخر تعديل بواسطة</small>
-                <strong class="d-block mt-1">
-                  {% if settings_obj.updated_by %}
-                    {{ settings_obj.updated_by.get_full_name|default:settings_obj.updated_by.username }}
-                  {% else %}
-                    غير متاح حالياً
-                  {% endif %}
-                </strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-lg-5 mb-4">
-          <div class="card h-100">
-            <div class="card-header bg-white">
-              <h4 class="card-title mb-0">
-                <i class="material-icons align-middle text-primary ml-1">subtitles</i>
-                نص الفوتر
-              </h4>
-            </div>
-            <div class="card-body text-right">
-              <p class="mb-0 text-dark">{{ settings_obj.footer_text|default:"لم يتم تحديد نص الفوتر." }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-7 mb-4">
-          <div class="card h-100">
-            <div class="card-header bg-white">
-              <h4 class="card-title mb-0">
-                <i class="material-icons align-middle text-warning ml-1">policy</i>
-                سياسة الصيانة
-              </h4>
-            </div>
-            <div class="card-body text-right">
-              <p class="mb-0 text-dark" style="white-space: pre-line;">{{ settings_obj.maintenance_policy_notes|default:"لا توجد ملاحظات سياسة صيانة مسجلة." }}</p>
-            </div>
-          </div>
+          {% endif %}
+          <h4 class="font-weight-bold mb-2">{{ settings_obj.system_name|default:"طلبات الصيانة" }}</h4>
+          <p class="text-muted mb-0">{{ settings_obj.organization_name|default:"اسم الجهة غير محدد" }}</p>
         </div>
       </div>
     </div>
 
-    <div class="tab-pane fade {% if form.errors %}show active{% endif %}" id="settings-edit" role="tabpanel" aria-labelledby="settings-edit-tab">
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-          <div class="alert alert-danger text-right">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <div class="card mb-4">
-          <div class="card-header bg-white">
-            <h4 class="card-title mb-0">
-              <i class="material-icons align-middle text-primary ml-1">business</i>
-              الهوية
-            </h4>
-          </div>
-          <div class="card-body">
-            <div class="row align-items-center">
-              <div class="col-lg-3 col-md-4 text-center mb-4 mb-md-0">
-                {% if settings_obj.logo %}
-                  <img src="{{ settings_obj.logo.url }}" alt="{{ settings_obj.system_name }}" class="hospital-settings-logo">
-                {% else %}
-                  <div class="hospital-settings-logo d-inline-flex align-items-center justify-content-center">
-                    <i class="material-icons text-muted" style="font-size: 52px;">image</i>
-                  </div>
-                {% endif %}
-              </div>
-              <div class="col-lg-9 col-md-8">
-                <div class="form-group">
-                  <label>{{ form.logo.label }}</label>
-                  {{ form.logo }}
-                  {% if form.logo.errors %}<small class="text-danger d-block">{{ form.logo.errors }}</small>{% endif %}
-                </div>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label>{{ form.system_name.label }}</label>
-                    {{ form.system_name }}
-                    {% if form.system_name.errors %}<small class="text-danger">{{ form.system_name.errors }}</small>{% endif %}
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label>{{ form.organization_name.label }}</label>
-                    {{ form.organization_name }}
-                    {% if form.organization_name.errors %}<small class="text-danger">{{ form.organization_name.errors }}</small>{% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
+    <div class="col-lg-8 mb-4">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="hospital-info-card text-right h-100">
+            <i class="material-icons text-primary mb-2">phone</i>
+            <small class="text-muted d-block">رقم الهاتف</small>
+            <strong class="d-block mt-1">{{ settings_obj.phone|default:"غير محدد" }}</strong>
           </div>
         </div>
-
-        <div class="card mb-4">
-          <div class="card-header bg-white">
-            <h4 class="card-title mb-0">
-              <i class="material-icons align-middle text-primary ml-1">contact_phone</i>
-              التواصل
-            </h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-lg-4 col-md-6 mb-3">
-                <label>{{ form.phone.label }}</label>
-                {{ form.phone }}
-                {% if form.phone.errors %}<small class="text-danger">{{ form.phone.errors }}</small>{% endif %}
-              </div>
-              <div class="col-lg-4 col-md-6 mb-3">
-                <label>{{ form.email.label }}</label>
-                {{ form.email }}
-                {% if form.email.errors %}<small class="text-danger">{{ form.email.errors }}</small>{% endif %}
-              </div>
-              <div class="col-lg-4 col-md-12 mb-3">
-                <label>{{ form.address.label }}</label>
-                {{ form.address }}
-                {% if form.address.errors %}<small class="text-danger">{{ form.address.errors }}</small>{% endif %}
-              </div>
-            </div>
+        <div class="col-md-4 mb-3">
+          <div class="hospital-info-card text-right h-100">
+            <i class="material-icons text-primary mb-2">email</i>
+            <small class="text-muted d-block">البريد الإلكتروني</small>
+            <strong class="d-block mt-1 text-break">{{ settings_obj.email|default:"غير محدد" }}</strong>
           </div>
         </div>
-
-        <div class="card mb-4">
-          <div class="card-header bg-white">
-            <h4 class="card-title mb-0">
-              <i class="material-icons align-middle text-primary ml-1">notes</i>
-              النصوص والسياسات
-            </h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-lg-6 mb-3">
-                <label>{{ form.footer_text.label }}</label>
-                {{ form.footer_text }}
-                {% if form.footer_text.errors %}<small class="text-danger">{{ form.footer_text.errors }}</small>{% endif %}
-              </div>
-              <div class="col-lg-6 mb-3">
-                <label>{{ form.maintenance_policy_notes.label }}</label>
-                {{ form.maintenance_policy_notes }}
-                {% if form.maintenance_policy_notes.errors %}<small class="text-danger">{{ form.maintenance_policy_notes.errors }}</small>{% endif %}
-              </div>
-            </div>
+        <div class="col-md-4 mb-3">
+          <div class="hospital-info-card text-right h-100">
+            <i class="material-icons text-primary mb-2">location_on</i>
+            <small class="text-muted d-block">العنوان</small>
+            <strong class="d-block mt-1">{{ settings_obj.address|default:"غير محدد" }}</strong>
           </div>
         </div>
-
-        <div class="d-flex flex-column flex-md-row justify-content-end mb-4" style="gap: 10px;">
-          <button class="btn btn-secondary" type="button" data-settings-tab="settings-overview-tab">
-            إلغاء والعودة للعرض
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <i class="material-icons align-middle ml-1">save</i>
-            حفظ الإعدادات
-          </button>
+        <div class="col-md-6 mb-3">
+          <div class="hospital-info-card text-right h-100">
+            <i class="material-icons text-success mb-2">schedule</i>
+            <small class="text-muted d-block">آخر تحديث</small>
+            <strong class="d-block mt-1">{{ settings_obj.updated_at|date:"Y-m-d H:i"|default:"غير متاح" }}</strong>
+          </div>
         </div>
-      </form>
+        <div class="col-md-6 mb-3">
+          <div class="hospital-info-card text-right h-100">
+            <i class="material-icons text-primary mb-2">verified</i>
+            <small class="text-muted d-block">حالة الإعدادات</small>
+            <strong class="d-block mt-1">جاهزة للاستخدام</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-5 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-white">
+          <h4 class="card-title mb-0">
+            <i class="material-icons align-middle text-primary ml-1">subtitles</i>
+            نص الفوتر
+          </h4>
+        </div>
+        <div class="card-body text-right">
+          <p class="mb-0 text-dark">{{ settings_obj.footer_text|default:"لم يتم تحديد نص الفوتر." }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-white">
+          <h4 class="card-title mb-0">
+            <i class="material-icons align-middle text-warning ml-1">policy</i>
+            سياسة الصيانة
+          </h4>
+        </div>
+        <div class="card-body text-right">
+          <p class="mb-0 text-dark" style="white-space: pre-line;">{{ settings_obj.maintenance_policy_notes|default:"لا توجد ملاحظات سياسة صيانة مسجلة." }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  document.querySelectorAll("[data-settings-tab]").forEach(function(button) {
-    button.addEventListener("click", function() {
-      var tab = document.getElementById(button.dataset.settingsTab);
-      if (tab) {
-        tab.click();
-      }
-    });
-  });
-});
-</script>
 {% endblock %}

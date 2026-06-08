@@ -13669,7 +13669,7 @@ h2.title {
 .nav-tabs .nav-item .nav-link:focus,
 .nav-tabs .nav-item .nav-link:hover {
     border: 0 !important;
-    color: #fff !important;
+    color: #000 !important;
     font-weight: 500
 }
 
