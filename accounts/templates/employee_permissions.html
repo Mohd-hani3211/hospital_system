@@ -1,0 +1,964 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title font-weight-bold">{{ title }}</span>
+{% endblock title %}
+
+{% block content %}
+<style>
+  .employee-permissions-page {
+    --ep-primary: var(--hmms-primary, #0F6CBD);
+    --ep-primary-soft: #EAF4FF;
+    --ep-success: var(--hmms-success, #2E7D32);
+    --ep-success-soft: #EAF7ED;
+    --ep-danger: var(--hmms-danger, #D32F2F);
+    --ep-danger-soft: #FDECEC;
+    --ep-warning: var(--hmms-warning, #ED6C02);
+    --ep-warning-soft: #FFF4E8;
+    --ep-surface: #FFFFFF;
+    --ep-muted-surface: #F8FAFC;
+    --ep-border: var(--hmms-border, #E5E7EB);
+    --ep-text: var(--hmms-text, #1F2937);
+    --ep-muted: var(--hmms-muted, #6B7280);
+    --ep-radius: 14px;
+    color: var(--ep-text);
+    font-family: inherit;
+  }
+
+  .employee-permissions-page * {
+    letter-spacing: 0 !important;
+  }
+
+  .employee-permissions-page .permissions-shell {
+    max-width: 1480px;
+    margin: 0 auto;
+  }
+
+  .employee-permissions-page .permissions-hero {
+    border: 1px solid rgba(15, 108, 189, .12);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #F7FBFF 100%);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .07);
+    overflow: hidden;
+  }
+
+  .employee-permissions-page .permissions-hero-body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .employee-permissions-page .hero-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .employee-permissions-page .hero-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 14px;
+    background: var(--ep-primary-soft);
+    color: var(--ep-primary);
+  }
+
+  .employee-permissions-page .hero-icon .material-icons {
+    font-size: 25px;
+  }
+
+  .employee-permissions-page .hero-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--ep-primary);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .employee-permissions-page .hero-title {
+    margin: 0;
+    color: var(--ep-text);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .employee-permissions-page .hero-subtitle {
+    max-width: 760px;
+    margin: 7px 0 0;
+    color: var(--ep-muted);
+    font-size: .9rem;
+    line-height: 1.8;
+  }
+
+  .employee-permissions-page .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .employee-permissions-page .hero-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 10px;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: .82rem;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .employee-permissions-page .hero-actions .material-icons {
+    font-size: 18px;
+  }
+
+  .employee-permissions-page .employee-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 0 22px 22px;
+  }
+
+  .employee-permissions-page .summary-item {
+    min-width: 0;
+    border: 1px solid var(--ep-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .82);
+    padding: 11px 12px;
+  }
+
+  .employee-permissions-page .summary-item small {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ep-muted);
+    font-size: .76rem;
+    font-weight: 700;
+  }
+
+  .employee-permissions-page .summary-item strong {
+    display: block;
+    overflow: hidden;
+    color: var(--ep-text);
+    font-size: .93rem;
+    font-weight: 800;
+    line-height: 1.55;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .employee-permissions-page .status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: .76rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .employee-permissions-page .status-badge.is-active {
+    background: var(--ep-success-soft);
+    color: var(--ep-success);
+  }
+
+  .employee-permissions-page .status-badge.is-inactive {
+    background: var(--ep-danger-soft);
+    color: var(--ep-danger);
+  }
+
+  .employee-permissions-page .permission-panel {
+    border: 1px solid var(--ep-border);
+    border-radius: 18px;
+    background: var(--ep-surface);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+    overflow: hidden;
+  }
+
+  .employee-permissions-page .permission-panel + .permission-panel {
+    margin-top: 18px;
+  }
+
+  .employee-permissions-page .panel-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    border-bottom: 1px solid var(--ep-border);
+    background: #FFFFFF;
+    padding: 16px 18px;
+    color: inherit;
+    text-align: right;
+    cursor: pointer;
+  }
+
+  .employee-permissions-page .panel-toggle:focus {
+    outline: 2px solid rgba(15, 108, 189, .24);
+    outline-offset: -2px;
+  }
+
+  .employee-permissions-page .panel-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+
+  .employee-permissions-page .panel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 12px;
+    background: var(--ep-primary-soft);
+    color: var(--ep-primary);
+  }
+
+  .employee-permissions-page .panel-icon.is-success {
+    background: var(--ep-success-soft);
+    color: var(--ep-success);
+  }
+
+  .employee-permissions-page .panel-icon.is-danger {
+    background: var(--ep-danger-soft);
+    color: var(--ep-danger);
+  }
+
+  .employee-permissions-page .panel-icon.is-warning {
+    background: var(--ep-warning-soft);
+    color: var(--ep-warning);
+  }
+
+  .employee-permissions-page .panel-icon .material-icons {
+    font-size: 21px;
+  }
+
+  .employee-permissions-page .panel-title {
+    margin: 0;
+    color: var(--ep-text);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .employee-permissions-page .panel-description {
+    margin: 2px 0 0;
+    color: var(--ep-muted);
+    font-size: .8rem;
+    line-height: 1.7;
+  }
+
+  .employee-permissions-page .panel-chevron {
+    color: var(--ep-muted);
+    font-size: 22px;
+    transition: transform .2s ease;
+  }
+
+  .employee-permissions-page .panel-toggle.collapsed .panel-chevron {
+    transform: rotate(180deg);
+  }
+
+  .employee-permissions-page .panel-body {
+    padding: 18px;
+    background: #FFFFFF;
+  }
+
+  .employee-permissions-page .permission-group {
+    padding: 16px;
+    border: 1px solid #EEF2F7;
+    border-radius: 14px;
+    background: var(--ep-muted-surface);
+  }
+
+  .employee-permissions-page .permission-group + .permission-group {
+    margin-top: 14px;
+  }
+
+  .employee-permissions-page .permission-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--ep-text);
+    font-size: .93rem;
+    font-weight: 800;
+  }
+
+  .employee-permissions-page .permission-group-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 22px;
+    border-radius: 99px;
+    background: var(--ep-primary);
+  }
+
+  .employee-permissions-page .permission-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .employee-permissions-page .permission-row {
+    min-height: 66px;
+    border: 1px solid #E7EDF3;
+    border-radius: 12px;
+    background: #FFFFFF;
+    padding: 12px;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+
+  .employee-permissions-page label.permission-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .employee-permissions-page label.permission-row:hover {
+    border-color: rgba(15, 108, 189, .32);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, .06);
+    transform: translateY(-1px);
+  }
+
+  .employee-permissions-page .permission-row.is-readonly,
+  .employee-permissions-page .permission-row.is-muted {
+    display: block;
+  }
+
+  .employee-permissions-page .permission-row.is-muted {
+    color: var(--ep-muted);
+    background: #FBFCFE;
+  }
+
+  .employee-permissions-page .permission-row.is-denied {
+    border-color: rgba(211, 47, 47, .24);
+    background: #FFFBFB;
+  }
+
+  .employee-permissions-page .permission-check {
+    flex: 0 0 auto;
+    padding-top: 2px;
+  }
+
+  .employee-permissions-page input[type="checkbox"] {
+    position: static;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    opacity: 1;
+    overflow: visible;
+    pointer-events: auto;
+    accent-color: var(--ep-primary);
+  }
+
+  .employee-permissions-page input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: .58;
+  }
+
+  .employee-permissions-page .permission-content {
+    min-width: 0;
+  }
+
+  .employee-permissions-page .permission-name {
+    display: block;
+    color: var(--ep-text);
+    font-size: .88rem;
+    font-weight: 800;
+    line-height: 1.65;
+  }
+
+  .employee-permissions-page .permission-note {
+    display: block;
+    margin-top: 5px;
+    color: var(--ep-muted);
+    font-size: .78rem;
+    line-height: 1.7;
+  }
+
+  .employee-permissions-page .badge-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 7px;
+  }
+
+  .employee-permissions-page .state-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: .71rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .employee-permissions-page .state-badge.is-inherited {
+    background: var(--ep-primary-soft);
+    color: var(--ep-primary);
+  }
+
+  .employee-permissions-page .state-badge.is-grant {
+    background: var(--ep-success-soft);
+    color: var(--ep-success);
+  }
+
+  .employee-permissions-page .state-badge.is-deny {
+    background: var(--ep-danger-soft);
+    color: var(--ep-danger);
+  }
+
+  .employee-permissions-page .state-badge.is-active {
+    background: #EEF2F7;
+    color: #475569;
+  }
+
+  .employee-permissions-page .approval-workflow {
+    border: 1px solid #EEF2F7;
+    border-radius: 14px;
+    background: var(--ep-muted-surface);
+    padding: 16px;
+  }
+
+  .employee-permissions-page .approval-workflow + .approval-workflow {
+    margin-top: 14px;
+  }
+
+  .employee-permissions-page .workflow-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .employee-permissions-page .workflow-heading strong {
+    color: var(--ep-text);
+    font-size: .95rem;
+    font-weight: 800;
+  }
+
+  .employee-permissions-page .workflow-heading small {
+    color: var(--ep-muted);
+    font-size: .76rem;
+  }
+
+  .employee-permissions-page .approval-level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 10px;
+  }
+
+  .employee-permissions-page .approval-level {
+    border: 1px solid #E7EDF3;
+    border-radius: 12px;
+    background: #FFFFFF;
+    padding: 12px;
+  }
+
+  .employee-permissions-page .approval-level-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .employee-permissions-page .level-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: var(--ep-primary-soft);
+    color: var(--ep-primary);
+    padding: 4px 9px;
+    font-size: .73rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .employee-permissions-page .approval-title {
+    margin-top: 7px;
+    color: var(--ep-text);
+    font-size: .88rem;
+    font-weight: 800;
+    line-height: 1.65;
+  }
+
+  .employee-permissions-page .approval-options {
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid #EEF2F7;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .employee-permissions-page .approval-option {
+    min-height: auto;
+    padding: 10px;
+    background: #FBFCFE;
+  }
+
+  .employee-permissions-page .empty-state {
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    background: #FFFFFF;
+    padding: 14px;
+    color: var(--ep-muted);
+    font-size: .86rem;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .employee-permissions-page .form-errors {
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: .86rem;
+  }
+
+  .employee-permissions-page .permission-actions {
+    position: sticky;
+    bottom: 12px;
+    z-index: 4;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border: 1px solid rgba(226, 232, 240, .92);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .95);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .12);
+    margin-top: 18px;
+    padding: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  .employee-permissions-page .permission-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    border-radius: 10px;
+    margin: 0;
+    padding: 8px 14px;
+    font-size: .86rem;
+  }
+
+  .employee-permissions-page .permission-actions .material-icons {
+    font-size: 18px;
+  }
+
+  @media (max-width: 1199.98px) {
+    .employee-permissions-page .employee-summary {
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .employee-permissions-page .permissions-hero-body {
+      flex-direction: column;
+      padding: 18px;
+    }
+
+    .employee-permissions-page .hero-main {
+      width: 100%;
+    }
+
+    .employee-permissions-page .hero-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .employee-permissions-page .hero-actions .btn {
+      flex: 1 1 100%;
+      justify-content: center;
+    }
+
+    .employee-permissions-page .employee-summary {
+      grid-template-columns: 1fr;
+      padding: 0 18px 18px;
+    }
+
+    .employee-permissions-page .summary-item strong {
+      white-space: normal;
+    }
+
+    .employee-permissions-page .panel-toggle {
+      align-items: flex-start;
+      padding: 14px;
+    }
+
+    .employee-permissions-page .panel-body,
+    .employee-permissions-page .permission-group,
+    .employee-permissions-page .approval-workflow {
+      padding: 14px;
+    }
+
+    .employee-permissions-page .permission-list,
+    .employee-permissions-page .approval-level-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .employee-permissions-page .workflow-heading,
+    .employee-permissions-page .approval-level-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .employee-permissions-page .permission-actions {
+      position: static;
+      flex-direction: column-reverse;
+    }
+
+    .employee-permissions-page .permission-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="container-fluid py-4 employee-permissions-page" dir="rtl">
+  <div class="permissions-shell">
+    <form method="post" id="employee-permissions-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger text-right form-errors">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <section class="permissions-hero mb-4">
+        <div class="permissions-hero-body">
+          <div class="hero-main text-right">
+            <span class="hero-icon">
+              <i class="material-icons">manage_accounts</i>
+            </span>
+            <div>
+              <span class="hero-eyebrow">إدارة صلاحيات المستخدم</span>
+              <h3 class="hero-title">إدارة صلاحيات الموظف: {{ employee.get_full_name|default:employee.username }}</h3>
+              <p class="hero-subtitle">
+                اضبط الاستثناءات الفردية لهذا الموظف فقط. صلاحيات المسمى الوظيفي تبقى كما هي، وهذه الصفحة تضيف أو تسحب صلاحيات من هذا المستخدم تحديداً.
+              </p>
+            </div>
+          </div>
+
+          <div class="hero-actions">
+            {% if profile_obj.job_title and can_edit_job_title_permissions %}
+              <a href="{% url 'job_title_permissions' profile_obj.job_title.id %}" class="btn btn-sm btn-outline-primary">
+                <i class="material-icons">admin_panel_settings</i>
+                إدارة صلاحيات المسمى الوظيفي
+              </a>
+            {% endif %}
+            <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-sm btn-light border">
+              <i class="material-icons">arrow_back</i>
+              رجوع
+            </a>
+          </div>
+        </div>
+
+        <div class="employee-summary text-right">
+          <div class="summary-item">
+            <small>اسم الموظف</small>
+            <strong>{{ employee.get_full_name|default:"غير محدد" }}</strong>
+          </div>
+          <div class="summary-item">
+            <small>اسم المستخدم</small>
+            <strong>{{ employee.username }}</strong>
+          </div>
+          <div class="summary-item">
+            <small>المسمى الوظيفي</small>
+            <strong>{{ profile_obj.job_title.title_name|default:"بدون مسمى وظيفي" }}</strong>
+          </div>
+          <div class="summary-item">
+            <small>القسم</small>
+            <strong>{{ profile_obj.managing_department.name|default:"غير محدد" }}</strong>
+          </div>
+          <div class="summary-item">
+            <small>حالة الحساب</small>
+            {% if employee.is_active %}
+              <span class="status-badge is-active">نشط</span>
+            {% else %}
+              <span class="status-badge is-inactive">غير نشط</span>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="permission-panel">
+        <button type="button" class="panel-toggle" data-toggle="collapse" data-target="#inheritedPermissions" aria-expanded="true" aria-controls="inheritedPermissions">
+          <span class="panel-heading">
+            <span class="panel-icon">
+              <i class="material-icons">verified_user</i>
+            </span>
+            <span>
+              <span class="panel-title d-block">الصلاحيات الموروثة من المسمى الوظيفي</span>
+              <span class="panel-description d-block">عرض فقط للصلاحيات القادمة من المسمى الوظيفي، مع توضيح ما تم سحبه من هذا المستخدم.</span>
+            </span>
+          </span>
+          <i class="material-icons panel-chevron">expand_less</i>
+        </button>
+        <div id="inheritedPermissions" class="collapse show">
+          <div class="panel-body">
+            {% for group in permission_data.permission_groups %}
+              <div class="permission-group text-right">
+                <div class="permission-group-title">{{ group.label }}</div>
+                <div class="permission-list">
+                  {% for permission in group.rows %}
+                    {% if permission.role_enabled %}
+                      <div class="permission-row is-readonly {% if permission.is_denied %}is-denied{% endif %}">
+                        <span class="permission-name">{{ permission.label }}</span>
+                        <span class="badge-line">
+                          <span class="state-badge is-inherited">ممنوحة من المسمى الوظيفي</span>
+                          {% if permission.is_denied %}
+                            <span class="state-badge is-deny">مسحوبة من هذا المستخدم</span>
+                          {% endif %}
+                        </span>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="permission-panel">
+        <button type="button" class="panel-toggle" data-toggle="collapse" data-target="#grantPermissions" aria-expanded="true" aria-controls="grantPermissions">
+          <span class="panel-heading">
+            <span class="panel-icon is-success">
+              <i class="material-icons">add_task</i>
+            </span>
+            <span>
+              <span class="panel-title d-block">صلاحيات إضافية للمستخدم</span>
+              <span class="panel-description d-block">اختر الصلاحيات التي تريد منحها لهذا الموظف فوق صلاحيات المسمى الوظيفي.</span>
+            </span>
+          </span>
+          <i class="material-icons panel-chevron">expand_less</i>
+        </button>
+        <div id="grantPermissions" class="collapse show">
+          <div class="panel-body">
+            {% for group in permission_data.permission_groups %}
+              <div class="permission-group text-right">
+                <div class="permission-group-title">{{ group.label }}</div>
+                <div class="permission-list">
+                  {% for permission in group.rows %}
+                    {% if permission.grant_selectable %}
+                      <label class="permission-row" for="grant_{{ permission.name }}">
+                        <span class="permission-check">
+                          <input id="grant_{{ permission.name }}" type="checkbox" name="grant_permissions" value="{{ permission.name }}" {% if permission.name in selected_grants %}checked{% endif %}>
+                        </span>
+                        <span class="permission-content">
+                          <span class="permission-name">{{ permission.label }}</span>
+                          <span class="badge-line">
+                            {% if permission.is_granted %}
+                              <span class="state-badge is-grant">إضافية للمستخدم</span>
+                            {% elif permission.effective_enabled %}
+                              <span class="state-badge is-active">مفعلة حالياً</span>
+                            {% else %}
+                              <span class="state-badge is-active">متاحة كاستثناء</span>
+                            {% endif %}
+                          </span>
+                        </span>
+                      </label>
+                    {% else %}
+                      <div class="permission-row is-muted">
+                        <span class="permission-name">{{ permission.label }}</span>
+                        <span class="badge-line">
+                          <span class="state-badge is-inherited">ممنوحة من المسمى الوظيفي</span>
+                        </span>
+                        <span class="permission-note">لا تحتاج إلى إضافتها هنا لأنها موجودة ضمن صلاحيات المسمى.</span>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+            {% if form.grant_permissions.errors %}
+              <small class="text-danger d-block mt-3 text-right">{{ form.grant_permissions.errors.0 }}</small>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="permission-panel">
+        <button type="button" class="panel-toggle" data-toggle="collapse" data-target="#denyPermissions" aria-expanded="true" aria-controls="denyPermissions">
+          <span class="panel-heading">
+            <span class="panel-icon is-danger">
+              <i class="material-icons">remove_circle</i>
+            </span>
+            <span>
+              <span class="panel-title d-block">صلاحيات مسحوبة من المستخدم</span>
+              <span class="panel-description d-block">اسحب صلاحية يملكها الموظف فعلياً، سواء كانت موروثة أو ممنوحة كاستثناء.</span>
+            </span>
+          </span>
+          <i class="material-icons panel-chevron">expand_less</i>
+        </button>
+        <div id="denyPermissions" class="collapse show">
+          <div class="panel-body">
+            {% for group in permission_data.permission_groups %}
+              <div class="permission-group text-right">
+                <div class="permission-group-title">{{ group.label }}</div>
+                <div class="permission-list">
+                  {% for permission in group.rows %}
+                    {% if permission.deny_visible %}
+                      <label class="permission-row {% if permission.is_denied %}is-denied{% endif %}" for="deny_{{ permission.name }}">
+                        <span class="permission-check">
+                          <input id="deny_{{ permission.name }}" type="checkbox" name="deny_permissions" value="{{ permission.name }}" {% if permission.name in selected_denies %}checked{% endif %}>
+                        </span>
+                        <span class="permission-content">
+                          <span class="permission-name">{{ permission.label }}</span>
+                          <span class="badge-line">
+                            {% if permission.is_denied %}
+                              <span class="state-badge is-deny">مسحوبة من المستخدم</span>
+                            {% elif permission.role_enabled %}
+                              <span class="state-badge is-inherited">ممنوحة من المسمى الوظيفي</span>
+                            {% elif permission.is_granted %}
+                              <span class="state-badge is-grant">إضافية للمستخدم</span>
+                            {% endif %}
+                          </span>
+                        </span>
+                      </label>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+            {% if form.deny_permissions.errors %}
+              <small class="text-danger d-block mt-3 text-right">{{ form.deny_permissions.errors.0 }}</small>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="permission-panel">
+        <button type="button" class="panel-toggle" data-toggle="collapse" data-target="#approvalPermissions" aria-expanded="true" aria-controls="approvalPermissions">
+          <span class="panel-heading">
+            <span class="panel-icon is-warning">
+              <i class="material-icons">fact_check</i>
+            </span>
+            <span>
+              <span class="panel-title d-block">مستويات التعميد والتعميد نيابة عن</span>
+              <span class="panel-description d-block">إدارة استثناءات التعميد الخاصة بهذا الموظف دون تغيير إعدادات المسمى الوظيفي.</span>
+            </span>
+          </span>
+          <i class="material-icons panel-chevron">expand_less</i>
+        </button>
+        <div id="approvalPermissions" class="collapse show">
+          <div class="panel-body">
+            {% for section in permission_data.approval_sections %}
+              <div class="approval-workflow text-right">
+                <div class="workflow-heading">
+                  <strong>{{ section.label }}</strong>
+                  <small>المستويات مرتبة حسب إعدادات التعميد الحالية</small>
+                </div>
+                {% if section.levels %}
+                  <div class="approval-level-grid">
+                    {% for item in section.levels %}
+                      <div class="approval-level">
+                        <div class="approval-level-head">
+                          <div>
+                            <span class="level-pill">المستوى {{ item.level.order_number }}</span>
+                            <div class="approval-title">{{ item.level.job_title.title_name }}</div>
+                          </div>
+                          <div class="badge-line">
+                            {% if item.normal_inherited %}
+                              <span class="state-badge is-inherited">تعميد مباشر من المسمى</span>
+                            {% endif %}
+                            {% if item.normal_denied %}
+                              <span class="state-badge is-deny">التعميد المباشر مسحوب</span>
+                            {% endif %}
+                            {% if item.delegation_inherited %}
+                              <span class="state-badge is-inherited">تعميد نيابة من المسمى</span>
+                            {% endif %}
+                            {% if item.delegation_denied %}
+                              <span class="state-badge is-deny">تعميد النيابة مسحوب</span>
+                            {% endif %}
+                            {% if item.delegation_granted %}
+                              <span class="state-badge is-grant">تعميد نيابة إضافي</span>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="approval-options">
+                          {% if item.can_grant_delegation %}
+                            <label class="permission-row approval-option" for="grant_{{ item.delegation_permission }}">
+                              <span class="permission-check">
+                                <input id="grant_{{ item.delegation_permission }}" type="checkbox" name="grant_permissions" value="{{ item.delegation_permission }}" {% if item.delegation_permission in selected_grants %}checked{% endif %}>
+                              </span>
+                              <span class="permission-content">
+                                <span class="permission-name">منح تعميد نيابة عن هذا المستوى</span>
+                                {% if item.delegation_granted %}
+                                  <span class="badge-line">
+                                    <span class="state-badge is-grant">إضافية للمستخدم</span>
+                                  </span>
+                                {% endif %}
+                              </span>
+                            </label>
+                          {% else %}
+                            <div class="permission-row approval-option is-muted">
+                              <span class="permission-name">تعميد النيابة لهذا المستوى موروث من المسمى الوظيفي.</span>
+                            </div>
+                          {% endif %}
+
+                          {% if item.normal_deny_visible %}
+                            <label class="permission-row approval-option {% if item.normal_denied %}is-denied{% endif %}" for="deny_{{ item.normal_permission }}">
+                              <span class="permission-check">
+                                <input id="deny_{{ item.normal_permission }}" type="checkbox" name="deny_permissions" value="{{ item.normal_permission }}" {% if item.normal_permission in selected_denies %}checked{% endif %}>
+                              </span>
+                              <span class="permission-content">
+                                <span class="permission-name">سحب مستوى التعميد المباشر من هذا المستخدم</span>
+                              </span>
+                            </label>
+                          {% endif %}
+
+                          {% if item.delegation_deny_visible %}
+                            <label class="permission-row approval-option {% if item.delegation_denied %}is-denied{% endif %}" for="deny_{{ item.delegation_permission }}">
+                              <span class="permission-check">
+                                <input id="deny_{{ item.delegation_permission }}" type="checkbox" name="deny_permissions" value="{{ item.delegation_permission }}" {% if item.delegation_permission in selected_denies %}checked{% endif %}>
+                              </span>
+                              <span class="permission-content">
+                                <span class="permission-name">سحب صلاحية التعميد نيابة عن هذا المستوى</span>
+                              </span>
+                            </label>
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="empty-state">لا توجد مستويات تعميد مضافة لهذا النوع.</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <div class="permission-actions">
+        <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-light border">إلغاء</a>
+        <button type="submit" class="btn btn-success">
+          <i class="material-icons">save</i>
+          حفظ صلاحيات الموظف
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

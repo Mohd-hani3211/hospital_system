@@ -1,6 +1,7 @@
 from django.db.models import Q
 
 from accounts.models import JobTitlePermission
+from accounts.permissions import get_effective_permissions
 from .models import MaintenanceRequest, SparePartRequest, complete_report as CompleteReport
 
 
@@ -13,13 +14,9 @@ def get_profile(user):
 
 
 def get_permissions(user):
-    profile = get_profile(user)
-    if not profile or not profile.job_title:
+    if not user or not user.is_authenticated:
         return JobTitlePermission()
-    try:
-        return profile.job_title.permissions
-    except JobTitlePermission.DoesNotExist:
-        return JobTitlePermission(job_title=profile.job_title)
+    return get_effective_permissions(user)
 
 
 def user_has_all_departments_access(user):

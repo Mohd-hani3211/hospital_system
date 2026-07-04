@@ -1,6 +1,6 @@
 {% load static %}
 
-{% with role_perms=request.user.profile.job_title.permissions current_url=request.resolver_match.url_name %}
+{% with role_perms=effective_permissions current_url=request.resolver_match.url_name %}
 <div class="sidebar hospital-sidebar" data-color="azure" data-background-color="black">
   <div class="logo">
     <a href="{% url 'home_redirect' %}" class="simple-text logo-mini">
@@ -21,7 +21,14 @@
   <div class="sidebar-wrapper">
     <div class="user">
       <div class="photo">
-        <img src="{% static 'img/faces/avatar.jpg' %}" alt="صورة المستخدم" />
+        
+        {% if request.user.profile.permissions.is_engineer %}
+        <img src="{% static 'img/faces/engineer.jpg' %}" alt="صورة المستخدم" />
+        {% else %}
+        <img src="{% static 'img/faces/manager.jpg' %}" alt="صورة المستخدم" />
+        
+        {% endif %}
+          
       </div>
       <div class="user-info">
         <a data-toggle="collapse" href="#userMenu" class="username">
@@ -67,22 +74,21 @@
                 <span class="sidebar-normal">ملفي الشخصي</span>
               </a>
             </li>
-            <li class="nav-item">
-              <form method="post" action="{% url 'logout' %}" class="m-0">
-                {% csrf_token %}
-                <button type="submit" class="nav-link border-0 bg-transparent text-right w-100">
-                  <span class="sidebar-mini">خ</span>
-                  <span class="sidebar-normal">تسجيل الخروج</span>
-                </button>
-              </form>
-            </li>
           </ul>
         </div>
       </div>
+      <div class="nav-item">
+        <form method="post" action="{% url 'logout' %}" class="m-0">
+          {% csrf_token %}
+          <button type="submit" style=" margin-top:10px; " class=" nav-link border-0 d-flex text-white bg-transparent ">
+            <i class="material-icons" style="margin: 0px 10px;" >logout</i>
+            <span class="">تسجيل الخروج</span>
+          </button>
+        </form>
+      </div>
     </div>
-
     <ul class="nav hospital-nav">
-      {% if perms.maintenance.can_view_dashboard or role_perms.can_view_dashboard %}
+      {% if role_perms.can_view_dashboard %}
         <li class="nav-item {% if current_url == 'maintenance_dashboard' %}active{% endif %}">
           <a class="nav-link" href="{% url 'maintenance_dashboard' %}">
             <i class="material-icons">dashboard</i>
@@ -92,68 +98,63 @@
       {% endif %}
 
       {% if role_perms.can_add_maintenance or role_perms.can_approve_maintenance or role_perms.can_add_spare_parts or role_perms.can_edit_delete_pending_parts or role_perms.can_approve_store_requisition or role_perms.can_approve_purchase_order or role_perms.can_issue_from_store or role_perms.can_confirm_issuance or role_perms.can_add_achievement_report or role_perms.can_approve_achievement_report %}
-        <li class="nav-item">
-          <a class="nav-link" data-toggle="collapse" href="#maintenanceMenu">
-            <i class="material-icons">engineering</i>
+        <li class="hospital-nav-section">
+          <span>إدارة الصيانة</span>
+        </li>
+
+        {% if role_perms.can_add_maintenance %}
+          <li class="nav-item {% if current_url == 'request_create' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'request_create' %}">
+              <i class="material-icons">add_circle</i>
+              <p>إضافة طلب صيانة</p>
+            </a>
+          </li>
+        {% endif %}
+
+        <li class="nav-item {% if current_url == 'request_list' or current_url == 'request_maintenance_details' or current_url == 'request_edit' %}active{% endif %}">
+          <a class="nav-link" href="{% url 'request_list' %}">
+            <i class="material-icons">assignment</i>
             <p>
-              إدارة الصيانة
-              <b class="caret"></b>
+              الطلبات النشطة
+              {% if maintenance_action_required_count > 0 %}
+                <span class="badge badge-danger sidebar-nav-badge">{{ maintenance_action_required_count }}</span>
+              {% endif %}
             </p>
           </a>
-          <div class="collapse {% if current_url == 'request_create' or current_url == 'request_list' or current_url == 'request_history' or current_url == 'spare_part_list' or current_url == 'spare_part_history' or current_url == 'request_maintenance_details' or current_url == 'spare_part_details' or current_url == 'spare_part_update' %}show{% endif %}" id="maintenanceMenu">
-            <ul class="nav">
-              {% if role_perms.can_add_maintenance %}
-                <li class="nav-item {% if current_url == 'request_create' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'request_create' %}">
-                    <span class="sidebar-mini">+</span>
-                    <span class="sidebar-normal">إضافة طلب صيانة</span>
-                  </a>
-                </li>
-              {% endif %}
-              <li class="nav-item {% if current_url == 'request_list' or current_url == 'request_maintenance_details' %}active{% endif %}">
-                <a class="nav-link" href="{% url 'request_list' %}">
-                  <span class="sidebar-mini">ن</span>
-                  <span class="sidebar-normal">
-                    الطلبات النشطة
-                    {% if maintenance_action_required_count > 0 %}
-                      <span class="badge badge-danger mr-2">{{ maintenance_action_required_count }}</span>
-                    {% endif %}
-                  </span>
-                </a>
-              </li>
-              {% if role_perms.can_add_spare_parts or role_perms.can_edit_delete_pending_parts or role_perms.can_approve_store_requisition or role_perms.can_approve_purchase_order or role_perms.can_issue_from_store or role_perms.can_confirm_issuance %}
-                <li class="nav-item {% if current_url == 'spare_part_list' or current_url == 'spare_part_details' or current_url == 'spare_part_update' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'spare_part_list' %}">
-                    <span class="sidebar-mini">ق</span>
-                    <span class="sidebar-normal">
-                      طلبات قطع الغيار
-                      {% if spare_part_action_required_count > 0 %}
-                        <span class="badge badge-danger mr-2">{{ spare_part_action_required_count }}</span>
-                      {% endif %}
-                    </span>
-                  </a>
-                </li>
-              {% endif %}
-              <li class="nav-item {% if current_url == 'request_history' %}active{% endif %}">
-                <a class="nav-link" href="{% url 'request_history' %}">
-                  <span class="sidebar-mini">س</span>
-                  <span class="sidebar-normal">سجل طلبات الصيانة</span>
-                </a>
-              </li>
-              {% if role_perms.can_add_spare_parts or role_perms.can_edit_delete_pending_parts or role_perms.can_approve_store_requisition or role_perms.can_approve_purchase_order or role_perms.can_issue_from_store or role_perms.can_confirm_issuance %}
-                <li class="nav-item {% if current_url == 'spare_part_history' %}active{% endif %}">
-                  <a class="nav-link" href="{% url 'spare_part_history' %}">
-                    <span class="sidebar-mini">أ</span>
-                    <span class="sidebar-normal">سجل طلبات القطع</span>
-                  </a>
-                </li>
-              {% endif %}
-            </ul>
-          </div>
         </li>
+
+        {% if role_perms.can_add_spare_parts or role_perms.can_edit_delete_pending_parts or role_perms.can_approve_store_requisition or role_perms.can_approve_purchase_order or role_perms.can_issue_from_store or role_perms.can_confirm_issuance %}
+          <li class="nav-item {% if current_url == 'spare_part_list' or current_url == 'spare_part_details' or current_url == 'spare_part_update' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'spare_part_list' %}">
+              <i class="material-icons">inventory_2</i>
+              <p>
+                طلبات قطع الغيار
+                {% if spare_part_action_required_count > 0 %}
+                  <span class="badge badge-danger sidebar-nav-badge">{{ spare_part_action_required_count }}</span>
+                {% endif %}
+              </p>
+            </a>
+          </li>
+        {% endif %}
+
+        <li class="nav-item {% if current_url == 'request_history' %}active{% endif %}">
+          <a class="nav-link" href="{% url 'request_history' %}">
+            <i class="material-icons">history</i>
+            <p>سجل طلبات الصيانة</p>
+          </a>
+        </li>
+
+        {% if role_perms.can_add_spare_parts or role_perms.can_edit_delete_pending_parts or role_perms.can_approve_store_requisition or role_perms.can_approve_purchase_order or role_perms.can_issue_from_store or role_perms.can_confirm_issuance %}
+          <li class="nav-item {% if current_url == 'spare_part_history' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'spare_part_history' %}">
+              <i class="material-icons">manage_history</i>
+              <p>سجل طلبات القطع</p>
+            </a>
+          </li>
+        {% endif %}
       {% endif %}
 
-      {% if can_manage_system_setup %}
+      {% if can_manage_system_setup or role_perms.can_view_employees or role_perms.can_view_job_titles or role_perms.can_manage_engineer_specialties %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="collapse" href="#employeesMenu">
             <i class="material-icons">groups</i>
@@ -164,28 +165,36 @@
           </a>
           <div class="collapse {% if current_url == 'employees' or current_url == 'employee_detail' or current_url == 'add_employee' or current_url == 'edit_employee' or current_url == 'roles' or current_url == 'job_title_permissions' or current_url == 'specialties' %}show{% endif %}" id="employeesMenu">
             <ul class="nav">
+              {% if can_manage_system_setup or role_perms.can_view_employees %}
               <li class="nav-item {% if current_url == 'employees' or current_url == 'employee_detail' or current_url == 'add_employee' or current_url == 'edit_employee' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'employees' %}">
                   <span class="sidebar-mini">م</span>
                   <span class="sidebar-normal">الموظفون</span>
                 </a>
               </li>
+              {% endif %}
+              {% if can_manage_system_setup or role_perms.can_view_job_titles %}
               <li class="nav-item {% if current_url == 'roles' or current_url == 'job_title_permissions' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'roles' %}">
                   <span class="sidebar-mini">و</span>
                   <span class="sidebar-normal">المسميات الوظيفية</span>
                 </a>
               </li>
+              {% endif %}
+              {% if can_manage_system_setup or role_perms.can_manage_engineer_specialties %}
               <li class="nav-item {% if current_url == 'specialties' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'specialties' %}">
                   <span class="sidebar-mini">ت</span>
                   <span class="sidebar-normal">التخصصات</span>
                 </a>
               </li>
+              {% endif %}
             </ul>
           </div>
         </li>
+      {% endif %}
 
+      {% if can_manage_system_setup or role_perms.can_view_organization_structure or role_perms.can_manage_buildings or role_perms.can_manage_floors or role_perms.can_manage_departments %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="collapse" href="#organizationMenu">
             <i class="material-icons">apartment</i>
@@ -196,30 +205,36 @@
           </a>
           <div class="collapse {% if current_url == 'buildings' or current_url == 'floors' or current_url == 'departments' %}show{% endif %}" id="organizationMenu">
             <ul class="nav">
+              {% if can_manage_system_setup or role_perms.can_view_organization_structure or role_perms.can_manage_buildings %}
               <li class="nav-item {% if current_url == 'buildings' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'buildings' %}">
                   <span class="sidebar-mini">ب</span>
                   <span class="sidebar-normal">المباني</span>
                 </a>
               </li>
+              {% endif %}
+              {% if can_manage_system_setup or role_perms.can_view_organization_structure or role_perms.can_manage_floors %}
               <li class="nav-item {% if current_url == 'floors' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'floors' %}">
                   <span class="sidebar-mini">ط</span>
                   <span class="sidebar-normal">الطوابق</span>
                 </a>
               </li>
+              {% endif %}
+              {% if can_manage_system_setup or role_perms.can_view_organization_structure or role_perms.can_manage_departments %}
               <li class="nav-item {% if current_url == 'departments' %}active{% endif %}">
                 <a class="nav-link" href="{% url 'departments' %}">
                   <span class="sidebar-mini">ق</span>
                   <span class="sidebar-normal">الأقسام</span>
                 </a>
               </li>
+              {% endif %}
             </ul>
           </div>
         </li>
       {% endif %}
 
-      {% if can_manage_system_setup or perms.accounts.can_view_audit_log or role_perms.can_view_audit_log %}
+      {% if can_manage_system_setup or role_perms.can_view_audit_log or role_perms.can_view_audit_logs or role_perms.can_manage_backups or role_perms.can_manage_system_settings %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="collapse" href="#adminMenu">
             <i class="material-icons">admin_panel_settings</i>
@@ -228,9 +243,9 @@
               <b class="caret"></b>
             </p>
           </a>
-          <div class="collapse {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' or current_url == 'backup_list' or current_url == 'system_settings' or current_url == 'system_settings_customize' %}show{% endif %}" id="adminMenu">
+          <div class="collapse {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' or current_url == 'backup_list' or current_url == 'system_settings' or current_url == 'system_settings_customize' or current_url == 'approval_hierarchy_settings' %}show{% endif %}" id="adminMenu">
             <ul class="nav">
-              {% if perms.accounts.can_view_audit_log or role_perms.can_view_audit_log %}
+              {% if can_manage_system_setup or role_perms.can_view_audit_log or role_perms.can_view_audit_logs %}
                 <li class="nav-item {% if current_url == 'audit_logs' or current_url == 'audit_log_detail' %}active{% endif %}">
                   <a class="nav-link" href="{% url 'audit_logs' %}">
                     <span class="sidebar-mini">ع</span>
@@ -238,14 +253,16 @@
                   </a>
                 </li>
               {% endif %}
-              {% if can_manage_system_setup %}
+              {% if can_manage_system_setup or role_perms.can_manage_backups %}
                 <li class="nav-item {% if current_url == 'backup_list' %}active{% endif %}">
                   <a class="nav-link" href="{% url 'backup_list' %}">
                     <span class="sidebar-mini">ن</span>
                     <span class="sidebar-normal">النسخ الاحتياطي</span>
                   </a>
                 </li>
-                <li class="nav-item {% if current_url == 'system_settings' or current_url == 'system_settings_customize' %}active{% endif %}">
+              {% endif %}
+              {% if can_manage_system_setup or role_perms.can_manage_system_settings %}
+                <li class="nav-item {% if current_url == 'system_settings' or current_url == 'system_settings_customize' or current_url == 'approval_hierarchy_settings' %}active{% endif %}">
                   <a class="nav-link" href="{% url 'system_settings' %}">
                     <span class="sidebar-mini">ض</span>
                     <span class="sidebar-normal">إعدادات النظام</span>

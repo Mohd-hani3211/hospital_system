@@ -68,6 +68,46 @@
         border-radius: 6px;
         font-weight: 700;
     }
+
+    .filter-card-header {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-card-heading {
+        flex: 1 1 260px;
+        min-width: 0;
+    }
+
+    .filter-card-toggle {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 575.98px) {
+        .filter-card-header {
+            align-items: stretch !important;
+            flex-direction: column;
+        }
+
+        .filter-card-heading {
+            flex-basis: auto;
+            width: 100%;
+        }
+
+        .filter-card-heading .card-title {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            line-height: 1.5;
+        }
+
+        .filter-card-toggle {
+            justify-content: center;
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="container-fluid py-4" style="direction: rtl;">
@@ -91,19 +131,19 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="card filter-card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <div class="text-right">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center filter-card-header">
+                    <div class="text-right filter-card-heading">
                         <h5 class="card-title mb-0">
                             <i class="material-icons align-middle text-primary ml-1">filter_alt</i>
                             الفلاتر والترتيب
                         </h5>
                         <small class="text-muted">تم العثور على {{ result_count }} طلب قطع غيار نشط.</small>
                     </div>
-                    <button class="btn btn-secondary btn-sm mb-0" type="button" data-toggle="collapse" data-target="#sparePartFilters" aria-expanded="true" aria-controls="sparePartFilters">
+                    <button class="btn btn-secondary btn-sm mb-0 filter-card-toggle" type="button" data-toggle="collapse" data-target="#sparePartFilters" aria-expanded="{% if active_filters %}true{% else %}false{% endif %}" aria-controls="sparePartFilters">
                         الفلاتر المتقدمة
                     </button>
                 </div>
-                <div class="collapse show" id="sparePartFilters">
+                <div class="collapse {% if active_filters %}show{% endif %}" id="sparePartFilters">
                     <div class="card-body">
                         <form method="get" class="text-right">
                             <div class="row">
@@ -280,15 +320,15 @@
                                     <span class="spare-meta-label mb-1">المسمى الوظيفي المسؤول عن المرحلة التالية</span>
                                     <strong class="text-dark">{{ part_request.next_approval_title }}</strong>
                                 </div>
-                                <span class="badge badge-light bg-light border text-dark px-2 py-1">{{ part_request.acceptance }} / 8</span>
+                                <span class="badge badge-light bg-light border text-dark px-2 py-1">{{ part_request.acceptance }} / {{ part_request.approval_total }}</span>
                             </div>
                             <div class="progress approval-progress">
-                                <div class="progress-bar {% if part_request.acceptance >= 8 %}bg-success{% elif part_request.status == 'rejected' %}bg-danger{% else %}bg-primary{% endif %}"
+                                <div class="progress-bar {% if part_request.approval_percent >= 100 %}bg-success{% elif part_request.status == 'rejected' %}bg-danger{% else %}bg-primary{% endif %}"
                                      role="progressbar"
                                      style="width: {{ part_request.approval_percent }}%;"
                                      aria-valuenow="{{ part_request.acceptance }}"
                                      aria-valuemin="0"
-                                     aria-valuemax="8">
+                                     aria-valuemax="{{ part_request.approval_total }}">
                                 </div>
                             </div>
                         </div>
@@ -312,7 +352,7 @@
                                             <td class="text-center">
                                                 {% if spare_part.is_rejected %}
                                                     <span class="badge badge-danger bg-danger">مرفوضة</span>
-                                                {% elif spare_part.acceptance >= 8 %}
+                                                {% elif part_request.approval_total and spare_part.acceptance >= part_request.approval_total %}
                                                     <span class="badge badge-success bg-success">معتمدة نهائياً</span>
                                                 {% elif spare_part.acceptance > 0 %}
                                                     <span class="badge badge-primary bg-primary">معتمدة مستوى {{ spare_part.acceptance }}</span>
@@ -342,14 +382,31 @@
                         {% endif %}
 
                         {% if part_request.can_take_approval_action %}
-                            <div class="d-flex flex-column flex-md-row spare-actions mt-auto">
-                                <form action="{% url 'spare_part_acceptance' part_request.pk %}" method="POST" class="flex-fill mb-2 mb-md-0">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success btn-sm btn-block">
+                            <div class="d-flex flex-wrap spare-actions mt-auto">
+                                {% for approval_action in part_request.approval_actions %}
+                                    <button type="button"
+                                            class="btn {{ approval_action.button_class }} btn-sm flex-fill mb-2 mb-md-0 open-approval-confirmation"
+                                            data-toggle="modal"
+                                            data-target="#approvalConfirmModal"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#approvalConfirmModal"
+                                            data-action-url="{{ approval_action.action_url }}"
+                                            data-approval-mode="{{ approval_action.mode }}"
+                                            data-extra-action="{{ approval_action.extra_action }}"
+                                            data-modal-title="{{ approval_action.modal_title }}"
+                                            data-confirm-label="{{ approval_action.confirm_label }}"
+                                            data-confirmation-text="{{ approval_action.confirmation_text }}"
+                                            data-current-user-name="{{ approval_action.current_user_name }}"
+                                            data-current-user-job-title="{{ approval_action.current_user_job_title }}"
+                                            data-workflow-label="{{ approval_action.workflow_label }}"
+                                            data-subject-number="{{ approval_action.subject_number }}"
+                                            data-required-level="{{ approval_action.required_level }}"
+                                            data-required-job-title="{{ approval_action.required_job_title }}"
+                                            data-required-employee-names="{{ approval_action.required_employee_names_text }}">
                                         <i class="fa fa-check ml-1"></i>
-                                        قبول الطلب بجميع القطع
+                                        {{ approval_action.button_label }}
                                     </button>
-                                </form>
+                                {% endfor %}
 
                                 <button type="button"
                                         class="btn btn-warning btn-sm flex-fill mb-2 mb-md-0 open-partial-reject-modal"
@@ -360,7 +417,7 @@
                                         data-request-id="{{ part_request.pk }}"
                                         data-action-url="{% url 'spare_part_rejected' part_request.pk %}">
                                     <i class="fa fa-adjust ml-1"></i>
-                                    قبول الطلب ورفض بعض القطع
+                                    {{ part_request.partial_reject_action_label|default:"قبول الطلب ورفض بعض القطع" }}
                                 </button>
 
                                 <button type="button"
@@ -372,7 +429,7 @@
                                         data-request-id="{{ part_request.pk }}"
                                         data-action-url="{% url 'spare_part_rejected' part_request.pk %}">
                                     <i class="fa fa-times ml-1"></i>
-                                    رفض كل القطع
+                                    {{ part_request.reject_action_label|default:"رفض كل القطع" }}
                                 </button>
                             </div>
                         {% endif %}
@@ -519,6 +576,8 @@
         </div>
     </div>
 </div>
+
+{% include "partials/approval_confirmation_modal.html" %}
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

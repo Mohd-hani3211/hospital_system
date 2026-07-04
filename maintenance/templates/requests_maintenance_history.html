@@ -5,12 +5,158 @@
 {% endblock title %}
 
 {% block content %}
+<style>
+    .filter-card-header {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-card-heading {
+        flex: 1 1 260px;
+        min-width: 0;
+    }
+
+    .filter-card-toggle {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 575.98px) {
+        .filter-card-header {
+            align-items: stretch !important;
+            flex-direction: column;
+        }
+
+        .filter-card-heading {
+            flex-basis: auto;
+            width: 100%;
+        }
+
+        .filter-card-heading .card-title {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            line-height: 1.5;
+        }
+
+        .filter-card-toggle {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+</style>
+
 <div class="container-fluid mb-5" style="direction: rtl;">
     <div class="row mb-3">
         <div class="col-12">
             <div class="card shadow-sm border-0 p-3" style="border-radius: 8px; background: #fff;">
                 <h4 class="font-weight-bold text-dark mb-1">{{ list_title }}</h4>
-                <p class="text-muted mb-0" style="font-size: 0.85rem;">{{ list_description }}</p>
+                <p class="text-muted mb-0" style="font-size: 0.85rem;">
+                    {{ list_description }}
+                    <span class="badge badge-primary bg-primary px-2 py-1 mr-2" style="font-size: 0.8rem;">{{ result_count }} طلب</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card filter-card shadow-sm border-0" style="border-radius: 8px;">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center filter-card-header">
+                    <div class="text-right filter-card-heading">
+                        <h5 class="card-title mb-0">
+                            <i class="material-icons align-middle text-primary ml-1">filter_alt</i>
+                            الفلاتر والترتيب
+                        </h5>
+                        <small class="text-muted">تم العثور على {{ result_count }} طلب صيانة في السجل.</small>
+                    </div>
+                    <button class="btn btn-secondary btn-sm mb-0 filter-card-toggle" type="button" data-toggle="collapse" data-target="#maintenanceHistoryFilters" aria-expanded="{% if active_filters %}true{% else %}false{% endif %}" aria-controls="maintenanceHistoryFilters">
+                        الفلاتر المتقدمة
+                    </button>
+                </div>
+                <div class="collapse {% if active_filters %}show{% endif %}" id="maintenanceHistoryFilters">
+                    <div class="card-body">
+                        <form method="get" class="text-right">
+                            <div class="row">
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-q">بحث</label>
+                                    <input id="maintenance-history-q" type="search" name="q" value="{{ filters.q }}" class="form-control" placeholder="رقم الطلب، وصف العطل، القسم، المهندس">
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-status">الحالة</label>
+                                    <select id="maintenance-history-status" name="status" class="form-control">
+                                        <option value="">كل حالات السجل</option>
+                                        {% for option in filter_options.statuses %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.status %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-priority">درجة الخطورة / الأولوية</label>
+                                    <select id="maintenance-history-priority" name="priority" class="form-control">
+                                        <option value="">كل الأولويات</option>
+                                        {% for option in filter_options.priorities %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.priority %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-department">القسم</label>
+                                    <select id="maintenance-history-department" name="department" class="form-control">
+                                        <option value="">كل الأقسام المتاحة</option>
+                                        {% for option in filter_options.departments %}
+                                            <option value="{{ option.id }}" {% if option.id|stringformat:"s" == filters.department %}selected{% endif %}>{{ option.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-engineer">المهندس المكلف</label>
+                                    <select id="maintenance-history-engineer" name="engineer" class="form-control">
+                                        <option value="">كل المهندسين</option>
+                                        {% for engineer in filter_options.engineers %}
+                                            <option value="{{ engineer.pk }}" {% if engineer.pk|stringformat:"s" == filters.engineer %}selected{% endif %}>{{ engineer.user.get_full_name|default:engineer.user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-3">
+                                    <label for="maintenance-history-created-from">من تاريخ</label>
+                                    <input id="maintenance-history-created-from" type="date" name="created_from" value="{{ filters.created_from }}" class="form-control">
+                                </div>
+                                <div class="col-lg-2 col-md-6 mb-3">
+                                    <label for="maintenance-history-created-to">إلى تاريخ</label>
+                                    <input id="maintenance-history-created-to" type="date" name="created_to" value="{{ filters.created_to }}" class="form-control">
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label for="maintenance-history-sort">طريقة الترتيب</label>
+                                    <select id="maintenance-history-sort" name="sort" class="form-control">
+                                        {% for option in filter_options.sorts %}
+                                            <option value="{{ option.value }}" {% if option.value == filters.sort %}selected{% endif %}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center" style="gap: 10px;">
+                                <div class="d-flex flex-wrap" style="gap: 8px;">
+                                    {% for active_filter in active_filters %}
+                                        <a class="active-filter-chip" href="{% if active_filter.remove_query %}?{{ active_filter.remove_query }}{% else %}{% url 'request_history' %}{% endif %}">
+                                            {{ active_filter.label }}: {{ active_filter.value }} ×
+                                        </a>
+                                    {% empty %}
+                                        <span class="text-muted small">لا توجد فلاتر مفعلة حالياً.</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex flex-column flex-sm-row" style="gap: 8px;">
+                                    <a href="{% url 'request_history' %}" class="btn btn-secondary mb-0">مسح الفلاتر</a>
+                                    <button type="submit" class="btn btn-primary mb-0">
+                                        <i class="material-icons align-middle ml-1">search</i>
+                                        تطبيق الفلاتر
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -87,5 +233,27 @@
             </div>
         {% endfor %}
     </div>
+
+    {% if is_paginated %}
+        <nav aria-label="صفحات سجل طلبات الصيانة" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">السابق</a>
+                    </li>
+                {% endif %}
+                {% for page_number in paginator.page_range %}
+                    <li class="page-item {% if page_number == page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_number }}">{{ page_number }}</a>
+                    </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">التالي</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 </div>
 {% endblock content %}

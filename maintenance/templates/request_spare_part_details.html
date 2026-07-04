@@ -91,45 +91,118 @@
                             <i class="material-icons align-middle text-primary ml-1" style="font-size: 20px;">fact_check</i> مسار ومراحل الاعتماد الفني:
                         </span>
                         
-                        {% if part_request.acceptance >= 8 %}
+                        {% if part_request.approval_percent >= 100 %}
                             <div class="p-3 mb-0 rounded d-flex align-items-center" style="background: linear-gradient(60deg, #e8f5e9, #c8e6c9); border: 1px solid #a5d6a7; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);">
                                 <i class="material-icons text-success ml-3" style="font-size: 32px;">verified</i>
                                 <div class="text-right">
                                     <h6 class="text-success mb-1 font-weight-bold" style="font-size: 0.95rem;">تم اعتماد طلب قطع الغيار نهائياً</h6>
-                                    <p class="text-success mb-0 font-weight-normal" style="font-size: 0.8rem; opacity: 0.9;">اكتملت مراحل التعميد الثمانية.</p>
+                                    <p class="text-success mb-0 font-weight-normal" style="font-size: 0.8rem; opacity: 0.9;">اكتملت مراحل التعميد.</p>
                                 </div>
                             </div>
                         {% else %}
                             <div class="d-flex justify-content-between text-center align-items-center px-2 mt-3" style="position: relative;">
-                                
-                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
-                                    <i class="material-icons {% if part_request.acceptance >= 1 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 1 %}opacity: 0.3;{% endif %}">
-                                        {% if part_request.acceptance >= 1 %}check_circle{% else %}radio_button_unchecked{% endif %}
-                                    </i>
-                                    <span class="d-block {% if part_request.acceptance >= 1 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">رئيس القسم</span>
-                                </div>
-                                
-                                <div class="flex-grow-1" style="height: 2px; background-color: {% if part_request.acceptance >= 2 %}#4caf50{% else %}#f0f0f0{% endif %}; margin-bottom: 20px;"></div>
-                                
-                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
-                                    <i class="material-icons {% if part_request.acceptance >= 2 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 2 %}opacity: 0.3;{% endif %}">
-                                        {% if part_request.acceptance >= 2 %}check_circle{% else %}radio_button_unchecked{% endif %}
-                                    </i>
-                                    <span class="d-block {% if part_request.acceptance >= 2 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">مدير الإدارة</span>
-                                </div>
-                                
-                                <div class="flex-grow-1" style="height: 2px; background-color: {% if part_request.acceptance >= 3 %}#4caf50{% else %}#f0f0f0{% endif %}; margin-bottom: 20px;"></div>
-                                
-                                <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
-                                    <i class="material-icons {% if part_request.acceptance >= 3 %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < 3 %}opacity: 0.3;{% endif %}">
-                                        {% if part_request.acceptance >= 3 %}check_circle{% else %}radio_button_unchecked{% endif %}
-                                    </i>
-                                    <span class="d-block {% if part_request.acceptance >= 3 %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">المدير العام</span>
-                                </div>
-                                
+                                {% for level in approval_levels %}
+                                    <div style="z-index: 2; background: #ffffff; padding: 0 6px;">
+                                        <i class="material-icons {% if part_request.acceptance >= level.order_number %}text-success{% else %}text-muted{% endif %}" style="font-size: 24px; {% if part_request.acceptance < level.order_number %}opacity: 0.3;{% endif %}">
+                                            {% if part_request.acceptance >= level.order_number %}check_circle{% else %}radio_button_unchecked{% endif %}
+                                        </i>
+                                        <span class="d-block {% if part_request.acceptance >= level.order_number %}text-dark font-weight-bold{% else %}text-muted{% endif %} mt-1" style="font-size: 0.72rem;">{{ level.job_title.title_name }}</span>
+                                    </div>
+                                    {% if not forloop.last %}
+                                        <div class="flex-grow-1" style="height: 2px; background-color: {% if part_request.acceptance >= level.order_number %}#4caf50{% else %}#f0f0f0{% endif %}; margin-bottom: 20px;"></div>
+                                    {% endif %}
+                                {% empty %}
+                                    <small class="text-muted">لا توجد مراحل تعميد مهيأة.</small>
+                                {% endfor %}
                             </div>
                         {% endif %}
                     </div>
+
+                    {% if approval_tracking_section %}
+                        <div class="mt-4 text-right">
+                            <h6 class="font-weight-bold mb-2">تفاصيل التعميدات</h6>
+                            {% if approval_tracking_section.has_configured_levels %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>المستوى</th>
+                                                <th>المسمى المطلوب</th>
+                                                <th>الحالة</th>
+                                                <th>تفاصيل الاعتماد</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for level in approval_tracking_section.levels %}
+                                                <tr>
+                                                    <td class="font-weight-bold">المستوى {{ level.order_number }}</td>
+                                                    <td>{{ level.required_job_title }}</td>
+                                                    <td>
+                                                        <span class="badge {{ level.status_badge_class }}">{{ level.status_label }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% if level.is_approved %}
+                                                            <small class="text-muted d-block">تم التعميد بواسطة:</small>
+                                                            <span class="font-weight-bold">{{ level.approved_by }}</span>
+                                                            {% if level.approved_by_job_title %}
+                                                                <small class="text-muted">- {{ level.approved_by_job_title }}</small>
+                                                            {% endif %}
+                                                            {% if level.approved_by_delegation %}
+                                                                <small class="text-warning d-block">نيابة عن: {{ level.delegated_for_job_title|default:level.required_job_title }}</small>
+                                                            {% endif %}
+                                                            <small class="text-muted d-block">طريقة التعميد: {{ level.approval_mode_label }}</small>
+                                                            <small class="text-muted d-block">{{ level.approved_at|date:"Y-m-d H:i" }}</small>
+                                                        {% elif level.is_rejected %}
+                                                            <span class="text-danger font-weight-bold">{{ level.approved_by }}</span>
+                                                            <small class="text-muted d-block">{{ level.approved_at|date:"Y-m-d H:i" }}</small>
+                                                        {% elif level.is_current_pending_level %}
+                                                            <span class="text-warning font-weight-bold">بانتظار التعميد الحالي</span>
+                                                        {% else %}
+                                                            <span class="text-muted">لم يصل الدور بعد</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info mb-0">لا توجد مستويات تعميد مضافة لهذا النوع من الإعدادات.</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if part_request.approval_actions %}
+                        <div class="mt-4 pt-3 border-top text-right">
+                            <h6 class="font-weight-bold mb-2">إجراءات التعميد</h6>
+                            <div class="d-flex flex-column flex-sm-row flex-wrap" style="gap: 8px;">
+                                {% for approval_action in part_request.approval_actions %}
+                                    <button type="button"
+                                            class="btn {{ approval_action.button_class }} btn-sm open-approval-confirmation"
+                                            data-toggle="modal"
+                                            data-target="#approvalConfirmModal"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#approvalConfirmModal"
+                                            data-action-url="{{ approval_action.action_url }}"
+                                            data-approval-mode="{{ approval_action.mode }}"
+                                            data-extra-action="{{ approval_action.extra_action }}"
+                                            data-modal-title="{{ approval_action.modal_title }}"
+                                            data-confirm-label="{{ approval_action.confirm_label }}"
+                                            data-confirmation-text="{{ approval_action.confirmation_text }}"
+                                            data-current-user-name="{{ approval_action.current_user_name }}"
+                                            data-current-user-job-title="{{ approval_action.current_user_job_title }}"
+                                            data-workflow-label="{{ approval_action.workflow_label }}"
+                                            data-subject-number="{{ approval_action.subject_number }}"
+                                            data-required-level="{{ approval_action.required_level }}"
+                                            data-required-job-title="{{ approval_action.required_job_title }}"
+                                            data-required-employee-names="{{ approval_action.required_employee_names_text }}">
+                                        <i class="material-icons align-middle ml-1" style="font-size: 16px;">check</i>
+                                        {{ approval_action.button_label }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
 
                 </div>
 
@@ -162,5 +235,7 @@
         </div>
     </div>
 </div>
+
+{% include "partials/approval_confirmation_modal.html" %}
 
 {%endblock%}

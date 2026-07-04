@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title">تفاصيل المسمى الوظيفي</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4" dir="rtl">
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start">
+        <div class="text-right mb-3 mb-lg-0">
+          <span class="hospital-section-eyebrow d-block mb-1">مسمى وظيفي</span>
+          <h3 class="mb-2 font-weight-bold">{{ job_title.title_name }}</h3>
+          <div class="d-flex flex-wrap" style="gap: 8px;">
+            {% if permissions and permissions.is_engineer %}
+              <span class="badge badge-info px-3 py-2">مهندس</span>
+            {% else %}
+              <span class="badge badge-light text-dark border px-3 py-2">ليس مهندساً</span>
+            {% endif %}
+            {% if permissions and permissions.is_department_manager %}
+              <span class="badge badge-primary px-3 py-2">رئيس قسم</span>
+            {% else %}
+              <span class="badge badge-light text-dark border px-3 py-2">ليس رئيس قسم</span>
+            {% endif %}
+            {% if permissions and permissions.can_manage_system_setup %}
+              <span class="badge badge-danger px-3 py-2">لديه صلاحية تهيئة النظام</span>
+            {% else %}
+              <span class="badge badge-light text-dark border px-3 py-2">لا يملك صلاحية تهيئة النظام</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap justify-content-lg-end" style="gap: 8px;">
+          <a href="{% url 'roles' %}" class="btn btn-sm btn-secondary">
+            <i class="material-icons">arrow_back</i>
+            رجوع
+          </a>
+          {% if can_edit_job_title_permissions %}
+            <a href="{% url 'job_title_permissions' job_title.id %}" class="btn btn-sm btn-primary">
+              <i class="material-icons">admin_panel_settings</i>
+              تعديل الصلاحيات
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-7 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title mb-0">الموظفون المرتبطون بهذا المسمى</h4>
+        </div>
+        <div class="card-body">
+          {% if employees %}
+            <div class="table-responsive">
+              <table class="table table-striped table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-right">اسم الموظف</th>
+                    <th class="text-right">اسم المستخدم</th>
+                    <th class="text-right">القسم</th>
+                    <th class="text-center">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for profile in employees %}
+                    <tr>
+                      <td class="text-right">{{ profile.user.get_full_name|default:profile.user.username }}</td>
+                      <td class="text-right">{{ profile.user.username }}</td>
+                      <td class="text-right">{{ profile.managing_department.name|default:"غير محدد" }}</td>
+                      <td class="text-center">
+                        {% if profile.user.is_active %}
+                          <span class="badge badge-success">نشط</span>
+                        {% else %}
+                          <span class="badge badge-danger">غير نشط</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="alert alert-info mb-0 text-right">لا يوجد موظفون مرتبطون بهذا المسمى الوظيفي.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header card-header-primary">
+          <h4 class="card-title mb-0">ملخص الصلاحيات</h4>
+        </div>
+        <div class="card-body text-right">
+          {% for group in permission_groups %}
+            <div class="mb-3">
+              <small class="text-muted d-block mb-2">{{ group.label }}</small>
+              <div class="d-flex flex-wrap" style="gap: 6px;">
+                {% for permission in group.permissions %}
+                  <span class="badge badge-light text-dark border px-2 py-2">{{ permission.label }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="alert alert-secondary mb-0">لا توجد صلاحيات مفعلة لهذا المسمى الوظيفي.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header card-header-primary">
+      <h4 class="card-title mb-0">ملخص التعميدات</h4>
+    </div>
+    <div class="card-body text-right">
+      <div class="row">
+        {% for workflow in approval_summary.normal_levels %}
+          <div class="col-md-4 mb-3">
+            <div class="border rounded p-3 h-100">
+              <small class="text-muted d-block mb-2">{{ workflow.label }}</small>
+              {% for level in workflow.levels %}
+                <span class="badge badge-primary px-3 py-2 mb-1">المستوى {{ level.order_number }}</span>
+              {% empty %}
+                <span class="text-muted">لا يوجد مستوى مباشر.</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <hr>
+
+      <h5 class="font-weight-bold mb-3">المستويات التي يستطيع هذا المسمى التعميد نيابة عنها</h5>
+      {% if approval_summary.delegated_levels %}
+        <div class="row">
+          {% for delegation in approval_summary.delegated_levels %}
+            <div class="col-md-6 col-xl-4 mb-3">
+              <div class="border rounded p-3 h-100">
+                <small class="text-muted d-block mb-2">{{ delegation.workflow_label }}</small>
+                <strong class="d-block mb-1">المستوى {{ delegation.order_number }}</strong>
+                <span class="text-muted">نيابة عن: {{ delegation.required_job_title.title_name }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-secondary mb-0">لا توجد مستويات تعميد نيابة مرتبطة بهذا المسمى الوظيفي.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% if breadcrumbs or show_back_button %}
+<div class="hospital-page-navigation " style="margin-top: -1rem;" dir="rtl">
+  {% if breadcrumbs %}
+    <nav aria-label="مسار التنقل">
+      <ol class="hospital-breadcrumb">
+        {% for crumb in breadcrumbs %}
+          <li class="hospital-breadcrumb-item {% if forloop.last or not crumb.url %}active{% endif %}">
+            {% if crumb.url and not forloop.last %}
+              <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+            {% else %}
+              <span>{{ crumb.label }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </nav>
+  {% endif %}
+
+  {% if show_back_button %}
+    <button type="button"
+            class="btn btn-outline-secondary btn-sm hospital-back-button"
+            data-history-back
+            data-fallback-url="{{ back_url|default:'' }}">
+      <i class="material-icons">arrow_forward</i>
+      رجوع
+    </button>
+  {% endif %}
+</div>
+{% endif %}

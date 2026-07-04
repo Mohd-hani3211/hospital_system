@@ -60,7 +60,11 @@
           </div>
           <h5 class="font-weight-bold">الحوكمة وسجل العمليات</h5>
           <p class="text-muted mb-3">تتبع الصلاحيات، الاعتمادات، والعمليات الحساسة داخل النظام.</p>
-          <a href="{% url 'audit_logs' %}" class="btn btn-outline-primary btn-sm">عرض سجل العمليات</a>
+          {% with role_perms=effective_permissions %}
+            {% if can_manage_system_setup or role_perms.can_view_audit_log or role_perms.can_view_audit_logs %}
+              <a href="{% url 'audit_logs' %}" class="btn btn-outline-primary btn-sm">عرض سجل العمليات</a>
+            {% endif %}
+          {% endwith %}
         </div>
       </div>
     </div>

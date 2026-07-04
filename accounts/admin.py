@@ -1,7 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import AuditLog, JobTitle, JobTitlePermission, Profile, Specialty, SystemSettings
+from .models import (
+    ApprovalDelegation,
+    ApprovalLevel,
+    AuditLog,
+    JobTitle,
+    JobTitlePermission,
+    Profile,
+    Specialty,
+    SystemSettings,
+)
 
 # Register your models here.
 
@@ -23,6 +32,20 @@ admin.site.register(Profile)  # تسجيل البروفايل بشكل منفص�
 admin.site.register(Specialty)
 admin.site.register(JobTitle)
 admin.site.register(JobTitlePermission)
+
+
+@admin.register(ApprovalLevel)
+class ApprovalLevelAdmin(admin.ModelAdmin):
+    list_display = ('workflow_type', 'order_number', 'job_title')
+    list_filter = ('workflow_type',)
+    search_fields = ('job_title__title_name',)
+
+
+@admin.register(ApprovalDelegation)
+class ApprovalDelegationAdmin(admin.ModelAdmin):
+    list_display = ('source_job_title', 'approval_level')
+    list_filter = ('approval_level__workflow_type',)
+    search_fields = ('source_job_title__title_name', 'approval_level__job_title__title_name')
 
 
 @admin.register(SystemSettings)

@@ -15,9 +15,17 @@
           <div>
             <span class="hospital-section-eyebrow d-block mb-1">ملف موظف</span>
             <h3 class="mb-1 font-weight-bold">{{ employee.get_full_name|default:employee.username }}</h3>
-            <p class="text-muted mb-2">
+           <p class="text-muted mb-2">
               <i class="material-icons align-middle ml-1" style="font-size: 17px;">badge</i>
               {{ profile_obj.job_title.title_name|default:"بدون مسمى وظيفي" }}
+              {% comment %} {{ employee.profile.managing_department }} {% endcomment %}
+              {% if employee.profile.managing_department %}
+               ( {{ employee.profile.managing_department.name|default:"لم يتم تعيين القسم" }} )
+
+               {% elif employee.profile.specialty %}
+               ( {{ employee.profile.specialty.name|default:"لم يتم تحديد التخصص " }} )
+              {% endif %}
+                
             </p>
             {% if employee.is_active %}
               <span class="badge badge-success bg-success px-3 py-2">نشط</span>
@@ -32,16 +40,25 @@
 
         {% if can_manage_employee %}
           <div class="d-flex flex-wrap justify-content-lg-end" style="gap: 8px;">
+            {% if can_edit_employee %}
             <a href="{% url 'edit_employee' employee.id %}" class="btn btn-sm btn-primary">
               <i class="material-icons">edit</i>
               تعديل بيانات الموظف
             </a>
-            {% if profile_obj.job_title %}
-              <a href="{% url 'job_title_permissions' profile_obj.job_title.id %}" class="btn btn-sm btn-primary">
-                <i class="material-icons">admin_panel_settings</i>
-                إدارة الصلاحيات
+            {% endif %}
+            {% if can_manage_user_permissions %}
+              <a href="{% url 'employee_permissions' employee.id %}" class="btn btn-sm btn-primary">
+                <i class="material-icons">manage_accounts</i>
+                إدارة صلاحيات الموظف
               </a>
             {% endif %}
+            {% if can_edit_job_title_permissions and profile_obj.job_title %}
+              <a href="{% url 'job_title_permissions' profile_obj.job_title.id %}" class="btn btn-sm btn-primary">
+                <i class="material-icons">admin_panel_settings</i>
+                إدارة صلاحيات المسمى الوظيفي
+              </a>
+            {% endif %}
+            {% if can_edit_employee %}
             <form method="POST" action="{% url 'toggle_employee_active' employee.id %}" class="d-inline">
               {% csrf_token %}
               <button type="submit" class="btn btn-sm {% if employee.is_active %}btn-warning{% else %}btn-success{% endif %}">
@@ -49,6 +66,7 @@
                 {% if employee.is_active %}تعطيل الحساب{% else %}تفعيل الحساب{% endif %}
               </button>
             </form>
+            {% endif %}
             <a href="{% url 'employees' %}" class="btn btn-sm btn-secondary">
               <i class="material-icons">arrow_back</i>
               رجوع
@@ -139,30 +157,38 @@
               <span class="text-muted">لا توجد مجموعات.</span>
             {% endfor %}
           </div>
-          <div class="table-responsive">
-            <table class="table table-sm mb-0">
-              <tbody>
-                {% for permission in role_data.important_permissions %}
-                  <tr>
-                    <td class="text-right">{{ permission.label }}</td>
-                    <td class="text-left">
-                      {% if permission.enabled %}
-                        <span class="badge badge-success bg-success">مفعلة</span>
-                      {% else %}
-                        <span class="badge badge-secondary bg-secondary">غير مفعلة</span>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% empty %}
-                  <tr><td class="text-muted text-center">لا توجد صلاحيات مرتبطة بالمسمى الوظيفي.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <div class="row mt-3">
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">صلاحيات فعالة</small>
+                <strong>{{ user_permission_override_data.summary.effective_count }}</strong>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">من المسمى الوظيفي</small>
+                <strong>{{ user_permission_override_data.summary.role_count }}</strong>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">إضافات خاصة</small>
+                <strong>{{ user_permission_override_data.summary.grant_count }}</strong>
+              </div>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">مسحوبة</small>
+                <strong>{{ user_permission_override_data.summary.deny_count }}</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  {% include "user_permission_sources.html" %}
 
   <div class="row">
     <div class="col-lg-6 mb-4">

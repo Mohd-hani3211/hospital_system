@@ -36,6 +36,7 @@
   <link href="{% static "css/material-dashboard.min.css" %}" rel="stylesheet" />
   <link href="{% static "css/my-css.css" %}" rel="stylesheet" />
   <link href="{% static "css/hospital-theme.css" %}" rel="stylesheet" />
+  <link href="{% static "css/global-search.css" %}" rel="stylesheet" />
 
 
   <style>
@@ -48,6 +49,121 @@
   .main-panel > .content {
       padding-bottom: 48px;
   }
+
+  .hospital-page-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 9px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .88);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, .04);
+
+      
+      position: sticky;
+      top: 0px;
+      z-index: 1020;
+  }
+
+  .hospital-breadcrumb {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      list-style: none;
+      font-size: .84rem;
+      line-height: 1.6;
+  }
+
+  .hospital-breadcrumb-item {
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+      color: #64748B;
+      font-weight: 700;
+  }
+
+  .hospital-breadcrumb-item + .hospital-breadcrumb-item::before {
+      content: "/";
+      margin: 0 7px;
+      color: #CBD5E1;
+      font-weight: 700;
+  }
+
+  .hospital-breadcrumb-item a {
+      color: #0F6CBD;
+      text-decoration: none;
+  }
+
+  .hospital-breadcrumb-item a:hover,
+  .hospital-breadcrumb-item a:focus {
+      color: #0B5CAD;
+      text-decoration: underline;
+  }
+
+  .hospital-breadcrumb-item.active span {
+      color: #1F2937;
+  }
+
+  .hospital-back-button {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 34px;
+      margin: 0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      white-space: nowrap;
+  }
+
+  .hospital-back-button .material-icons {
+      font-size: 17px;
+  }
+
+  .hospital-nav-section {
+      margin: 12px 18px 4px;
+      padding: 0;
+      color: rgba(255, 255, 255, .56);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.4;
+  }
+
+  .sidebar-nav-badge {
+      flex: 0 0 auto;
+      margin-right: auto !important;
+      margin-left: 0 !important;
+  }
+
+  @media (max-width: 767.98px) {
+      .hospital-page-navigation {
+          align-items: flex-start;
+          flex-direction: column;
+          margin-bottom: 10px;
+          padding: 8px 10px;
+      }
+
+      .hospital-breadcrumb {
+          font-size: .78rem;
+      }
+
+      .hospital-back-button {
+          width: 100%;
+      }
+  }
+
+  body.sidebar-mini .hospital-nav-section {
+      display: none !important;
+  }
   </style>
 </head>
 
@@ -57,96 +173,124 @@
   <div class="wrapper">
       {% include "sidebar.html" %}
       <div class="sidebar-mobile-overlay" aria-hidden="true"></div>
-      
+
     <div class="main-panel">
-      <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top ">
-        <div class="container-fluid">
-          <div class="navbar-wrapper">
-            <a class="hospital-navbar-brand" href="{% url 'home_redirect' %}" aria-label="{{ system_settings.organization_name|default:system_settings.system_name|default:'نظام إدارة الصيانة' }}">
-              {% if system_settings.logo %}
-                <span class="hospital-navbar-brand-logo">
-                  <img src="{{ system_settings.logo.url }}" alt="{{ system_settings.organization_name|default:system_settings.system_name }}">
+      <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top hospital-navbar">
+        <div class="container-fluid hospital-navbar-container">
+          <div class="hospital-navbar-main">
+            <button class="navbar-toggler hospital-sidebar-toggle" type="button" aria-controls="navigation-index" aria-expanded="false" aria-label="فتح القائمة الجانبية">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="navbar-toggler-icon icon-bar"></span>
+              <span class="navbar-toggler-icon icon-bar"></span>
+              <span class="navbar-toggler-icon icon-bar"></span>
+            </button>
+
+            <div class="navbar-wrapper hospital-brand-cluster">
+              <a class="hospital-navbar-brand" href="{% url 'home_redirect' %}" aria-label="{{ system_settings.organization_name|default:system_settings.system_name|default:'نظام إدارة الصيانة' }}">
+                {% if system_settings.logo %}
+                  <span class="hospital-navbar-brand-logo">
+                    <img src="{{ system_settings.logo.url }}" alt="{{ system_settings.organization_name|default:system_settings.system_name }}">
+                  </span>
+                {% endif %}
+                <span class="hospital-navbar-brand-text">
+                  {{ system_settings.organization_name|default:system_settings.system_name|default:"نظام إدارة الصيانة" }}
                 </span>
-              {% endif %}
-              <span class="hospital-navbar-brand-text">
-                {{ system_settings.organization_name|default:system_settings.system_name|default:"نظام إدارة الصيانة" }}
-              </span>
-            </a>
-            <div class="navbar-minimize">
-              <button id="minimizeSidebar" class="btn btn-just-icon btn-white btn-fab btn-round" type="button" aria-label="تصغير القائمة الجانبية">
-                <i class="material-icons text_align-center visible-on-sidebar-regular">more_vert</i>
-                <i class="material-icons design_bullet-list-67 visible-on-sidebar-mini">view_list</i>
-              </button>
+              </a>
+              <div class="navbar-minimize">
+                <button id="minimizeSidebar" class="btn btn-just-icon btn-white btn-fab btn-round" type="button" aria-label="تصغير القائمة الجانبية">
+                  <i class="material-icons text_align-center visible-on-sidebar-regular">more_vert</i>
+                  <i class="material-icons design_bullet-list-67 visible-on-sidebar-mini">view_list</i>
+                </button>
+              </div>
             </div>
+
+            <div class="hospital-navbar-title">
               {% block title %}
               {% endblock title %}
-          </div>
-          <button class="navbar-toggler hospital-sidebar-toggle" type="button" aria-controls="navigation-index" aria-expanded="false" aria-label="فتح القائمة الجانبية">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="navbar-toggler-icon icon-bar"></span>
-            <span class="navbar-toggler-icon icon-bar"></span>
-            <span class="navbar-toggler-icon icon-bar"></span>
-          </button>
-          <div class="collapse navbar-collapse justify-content-end">
-            <form class="navbar-form hospital-navbar-search d-none d-lg-block">
-              <div class="input-group no-border">
-                <input type="text" value="" class="form-control" placeholder="بحث في النظام...">
-                <button type="submit" class="btn btn-white btn-round btn-just-icon">
+            </div>
+
+            <form class="navbar-form hospital-navbar-search hospital-navbar-search-desktop" data-global-search data-search-url="{% url 'global_search' %}" autocomplete="off" role="search">
+              <div class="input-group no-border hospital-global-search">
+                <input type="text" value="" class="form-control" placeholder="بحث في النظام..." data-global-search-input aria-label="بحث في النظام" autocomplete="off">
+                <button type="button" class="btn btn-white btn-round btn-just-icon" data-global-search-button aria-label="بحث">
                   <i class="material-icons">search</i>
                   <div class="ripple-container"></div>
                 </button>
+                <div class="global-search-results" data-global-search-results hidden></div>
               </div>
             </form>
-            <ul class="navbar-nav">
-              <li class="nav-item">
-                <a class="nav-link" href="#pablo">
-                  <i class="material-icons">dashboard</i>
-                  <p class="d-lg-none d-md-block">المؤشرات</p>
-                </a>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="material-icons">notifications</i>
-                  {% if unread_notifications_count > 0 %}
-                    <span class="notification">{{ unread_notifications_count }}</span>
-                  {% endif %}
-                  <p class="d-lg-none d-md-block">الإشعارات</p>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right notifications-dropdown text-right" aria-labelledby="navbarDropdownMenuLink" dir="rtl">
-                  {% for notification in latest_unread_notifications %}
-                    <a class="dropdown-item notification-item py-2" href="{% url 'notification_redirect' notification.pk %}">
-                      <span class="d-block font-weight-bold">{{ notification.title }}</span>
-                      <small class="text-muted">{{ notification.created_at|date:"Y-m-d H:i" }}</small>
-                    </a>
-                  {% empty %}
-                    <span class="dropdown-item notification-item text-muted">لا توجد إشعارات جديدة</span>
-                  {% endfor %}
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item notification-item text-primary font-weight-bold" href="{% url 'notifications_list' %}">
-                    عرض كل الإشعارات
+
+            <div class="hospital-navbar-actions">
+              <ul class="navbar-nav">
+                <li class="nav-item d-lg-none">
+                  <button type="button" class="nav-link hospital-mobile-search-toggle" data-mobile-search-toggle aria-controls="hospitalMobileSearchPanel" aria-expanded="false" aria-label="فتح البحث العام">
+                    <i class="material-icons">search</i>
+                    <p class="d-lg-none d-md-block">البحث</p>
+                  </button>
+                </li>
+                <li class="nav-item d-none d-lg-block">
+                  <a class="nav-link" href="#pablo">
+                    <i class="material-icons">dashboard</i>
+                    <p class="d-lg-none d-md-block">المؤشرات</p>
                   </a>
-                </div>
-              </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link" href="#pablo" id="navbarDropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="material-icons">person</i>
-                  <p class="d-lg-none d-md-block">الحساب</p>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right text-right" aria-labelledby="navbarDropdownProfile" dir="rtl">
-                  <a class="dropdown-item" href="{% url "profile" %}">الملف الشخصي</a>
-                  <div class="dropdown-divider"></div>
-                  <form method="post" action="{% url 'logout' %}" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="dropdown-item border-0 bg-transparent text-right w-100">تسجيل الخروج</button>
-                  </form>
-                </div>
-              </li>
-            </ul>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="nav-link" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="material-icons">notifications</i>
+                    {% if unread_notifications_count > 0 %}
+                      <span class="notification">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                    <p class="d-lg-none d-md-block">الإشعارات</p>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-right notifications-dropdown text-right" aria-labelledby="navbarDropdownMenuLink" dir="rtl">
+                    {% for notification in latest_unread_notifications %}
+                      <a class="dropdown-item notification-item py-2" href="{% url 'notification_redirect' notification.pk %}">
+                        <span class="d-block font-weight-bold">{{ notification.title }}</span>
+                        <small class="text-muted">{{ notification.created_at|date:"Y-m-d H:i" }}</small>
+                      </a>
+                    {% empty %}
+                      <span class="dropdown-item notification-item text-muted">لا توجد إشعارات جديدة</span>
+                    {% endfor %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item notification-item text-primary font-weight-bold" href="{% url 'notifications_list' %}">
+                      عرض كل الإشعارات
+                    </a>
+                  </div>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="nav-link" href="#pablo" id="navbarDropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="material-icons">person</i>
+                    <p class="d-lg-none d-md-block">الحساب</p>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-right text-right" aria-labelledby="navbarDropdownProfile" dir="rtl">
+                    <a class="dropdown-item" href="{% url "profile" %}">الملف الشخصي</a>
+                    <div class="dropdown-divider"></div>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                      {% csrf_token %}
+                      <button type="submit" class="dropdown-item border-0 bg-transparent text-right w-100">تسجيل الخروج</button>
+                    </form>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="hospitalMobileSearchPanel" class="hospital-mobile-search-panel" hidden>
+            <form class="navbar-form hospital-navbar-search hospital-navbar-search-mobile" data-global-search data-search-url="{% url 'global_search' %}" autocomplete="off" role="search">
+              <div class="input-group no-border hospital-global-search">
+                <input type="text" value="" class="form-control" placeholder="بحث في النظام..." data-global-search-input aria-label="بحث في النظام" autocomplete="off">
+                <button type="button" class="btn btn-white btn-round btn-just-icon" data-global-search-button aria-label="بحث">
+                  <i class="material-icons">search</i>
+                  <div class="ripple-container"></div>
+                </button>
+                <div class="global-search-results" data-global-search-results hidden></div>
+              </div>
+            </form>
           </div>
         </div>
       </nav>
-      
-      
+
+
       <div class="content">
 
         <div class="hospital-messages">
@@ -162,35 +306,63 @@
             {% endif %}
         </div>
 
+        {% include "partials/page_navigation.html" %}
+
         <div class="row mb-5" style="margin-top:30px;">
           <div class="col-md-12 mb-5">
-          
+
               {% block content %}
               {% endblock content %}
 
           </div>
         </div>
-        
-        <footer class="footer">
+
+        <footer class="footer hmms-footer">
           <div class="container-fluid">
-            <nav class="float-left">
-              <ul>
-                {% if system_settings.phone %}<li><a href="tel:{{ system_settings.phone }}">{{ system_settings.phone }}</a></li>{% endif %}
-                {% if system_settings.email %}<li><a href="mailto:{{ system_settings.email }}">{{ system_settings.email }}</a></li>{% endif %}
-                {% if system_settings.address %}<li><span>{{ system_settings.address }}</span></li>{% endif %}
-              </ul>
-            </nav>
-            <div class="copyright float-right">
-              &copy;
-              <script>
-                document.write(new Date().getFullYear())
-              </script>
-              {{ system_settings.footer_text|default:system_settings.organization_name|default:system_settings.system_name|default:"طلبات الصيانة" }}
+            <div class="hmms-footer-content">
+              <div class="hmms-footer-main">
+                <span class="hmms-footer-copyright">
+                  &copy;
+                  <script>
+                    document.write(new Date().getFullYear())
+                  </script>
+                  {{ system_settings.footer_text|default:system_settings.organization_name|default:system_settings.system_name|default:"طلبات الصيانة" }}
+                </span>
+                <span class="hmms-footer-separator" aria-hidden="true">|</span>
+                <span class="hmms-footer-version">الإصدار 1.0</span>
+              </div>
+
+              <div class="hmms-footer-developer" aria-label="بيانات مطور النظام">
+                <span class="hmms-footer-chip hmms-footer-developer-name">
+                  <i class="material-icons" aria-hidden="true">code</i>
+                  تطوير: محمد هاني
+                </span>
+                <a class="hmms-footer-chip" href="tel:777970828">
+                  <i class="material-icons" aria-hidden="true">phone</i>
+                  هاتف: 777970828
+                </a>
+                <a class="hmms-footer-chip" href="https://wa.me/967777970828" target="_blank" rel="noopener">
+                  <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                  واتساب: 777970828
+                </a>
+                <span class="hmms-footer-chip">
+                  <i class="fa fa-telegram" aria-hidden="true"></i>
+                  تيليجرام: 777970828
+                </span>
+              </div>
+
+              {% if system_settings.phone or system_settings.email or system_settings.address %}
+                <nav class="hmms-footer-system-contact" aria-label="بيانات التواصل الخاصة بالنظام">
+                  {% if system_settings.phone %}<a href="tel:{{ system_settings.phone }}">{{ system_settings.phone }}</a>{% endif %}
+                  {% if system_settings.email %}<a href="mailto:{{ system_settings.email }}">{{ system_settings.email }}</a>{% endif %}
+                  {% if system_settings.address %}<span>{{ system_settings.address }}</span>{% endif %}
+                </nav>
+              {% endif %}
             </div>
           </div>
         </footer>
-        
-      </div> 
+
+      </div>
     </div>
   </div>
 
@@ -222,44 +394,15 @@
   <!-- my js files -->
 
   <script src="{% static "js/profile_admin.js" %}"></script>
+  <script src="{% static "js/global-search.js" %}"></script>
 
 
 
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="{% static "css/select2-clear-fix.css" %}" rel="stylesheet" />
+  <script src="{% static "js/select2-clear-fix.js" %}"></script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    
-    // تحميل مكتبة Select2 برمجياً
-    $.getScript("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js", function() {
-        
-        // استهداف جميع وسوم <select> في الصفحة
-        $('select').each(function() {
-            var $currentSelect = $(this);
-            var $parentModal = $currentSelect.closest('.modal'); // البحث عما إذا كانت القائمة داخل Modal
-            
-            // الإعدادات الأساسية
-            var select2Options = {
-                dir: "rtl",
-                width: '100%',
-                allowClear: true,
-                // جلب النص الافتراضي من الخيار المعطل (إن وجد) ليكون الـ placeholder
-                placeholder: $currentSelect.find('option[disabled]:selected').text() || "الرجاء الاختيار"
-            };
 
-            // إذا وجدنا أن القائمة داخل Modal، نضيف خاصية dropdownParent ديناميكياً
-            if ($parentModal.length) {
-                select2Options.dropdownParent = $parentModal;
-            }
-
-            // تفعيل المكتبة على القائمة الحالية
-            $currentSelect.select2(select2Options);
-        });
-        
-    });
-    
-});
-</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -305,18 +448,43 @@ document.addEventListener("DOMContentLoaded", function() {
     setTimeout(function() {
         // تحديد جميع التنبيهات الموجودة في الصفحة
         let alerts = document.querySelectorAll('.alert');
-        
+
         alerts.forEach(function(alert) {
             // إضافة تأثير اختفاء تدريجي (Fade out)
             alert.style.transition = "opacity 0.5s ease";
             alert.style.opacity = "0";
-            
+
             // إزالة العنصر تماماً من الـ DOM بعد انتهاء تأثير الإخفاء (نصف ثانية)
             setTimeout(function() {
                 alert.remove();
             }, 500);
         });
-    }, 4000); // يمكنك تعديل الرقم 4000 إذا أردت زيادة أو تقليل المدة
+    }, 6000); // يمكنك تعديل الرقم 4000 إذا أردت زيادة أو تقليل المدة
 </script>
+<script>
+document.addEventListener("click", function(event) {
+    var backButton = event.target.closest("[data-history-back]");
+    if (!backButton) {
+        return;
+    }
+    event.preventDefault();
+    var fallbackUrl = backButton.getAttribute("data-fallback-url");
+    if (window.history.length > 1) {
+        window.history.back();
+    } else if (fallbackUrl) {
+        window.location.href = fallbackUrl;
+    }
+});
+</script>
+<script>
+  window.addEventListener("pageshow", function () {
+    const nav = performance.getEntriesByType("navigation")[0];
+
+    if (nav && nav.type === "back_forward") {
+        window.location.reload();
+    }
+});
+</script>
+
 </body>
 </html>

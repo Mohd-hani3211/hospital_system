@@ -106,8 +106,7 @@ class complete_report(models.Model):
     rejected_reason = models.CharField("سبب الرفض", null=True, max_length=1000, blank=True)
     rejected_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الرفض")
 
-    # rang between 0 and 5
-    acceptance = models.IntegerField( validators=[MinValueValidator(0), MaxValueValidator(5)], default=0,verbose_name=" مستوائ التعميد")
+    acceptance = models.IntegerField( validators=[MinValueValidator(0)], default=0,verbose_name=" مستوائ التعميد")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ إنشاء التقرير")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ آخر تحديث")
 
@@ -149,7 +148,7 @@ class SparePartRequest(models.Model):
 
 
 
-    acceptance = models.IntegerField( validators=[MinValueValidator(0), MaxValueValidator(8)], default=0,verbose_name=" مستوائ التعميد")
+    acceptance = models.IntegerField( validators=[MinValueValidator(0)], default=0,verbose_name=" مستوائ التعميد")
 
 
 
@@ -199,7 +198,7 @@ class SpareParts(models.Model):
     part_name = models.CharField(max_length=100, verbose_name="اسم قطعة الغيار")
     quantity = models.PositiveIntegerField(verbose_name="الكمية المطلوبة")
 
-    acceptance = models.IntegerField( validators=[MinValueValidator(0), MaxValueValidator(8)], default=0,verbose_name=" مستوائ التعميد")
+    acceptance = models.IntegerField( validators=[MinValueValidator(0)], default=0,verbose_name=" مستوائ التعميد")
 
     # value 1 means confirmed, -1 means rejected, 0 means not confirmed
     Issued_confirmation= models.IntegerField( validators=[MinValueValidator(-1), MaxValueValidator(1)], default=0,verbose_name=" مستوائ التعميد")
@@ -208,6 +207,13 @@ class SpareParts(models.Model):
 
 
 class SparePartApproval(models.Model):
+    APPROVAL_MODE_NORMAL = 'normal'
+    APPROVAL_MODE_DELEGATED = 'delegated'
+    APPROVAL_MODE_CHOICES = [
+        (APPROVAL_MODE_NORMAL, 'اعتماد مباشر'),
+        (APPROVAL_MODE_DELEGATED, 'اعتماد بالتفويض'),
+    ]
+
     DECISION_CHOICES = [
         ('accepted', 'تم القبول'),
         ('rejected', 'تم الرفض'),
@@ -215,6 +221,10 @@ class SparePartApproval(models.Model):
 
     request = models.ForeignKey(SparePartRequest, on_delete=models.CASCADE, related_name='approvals', verbose_name="طلب قطع الغيار")
     approver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='spare_part_approvals', verbose_name="المعمد")
+    approval_level = models.ForeignKey('accounts.ApprovalLevel', on_delete=models.SET_NULL, null=True, blank=True, related_name='spare_part_approvals')
+    required_job_title = models.ForeignKey('accounts.JobTitle', on_delete=models.SET_NULL, null=True, blank=True, related_name='required_spare_part_approvals')
+    approval_mode = models.CharField(max_length=20, choices=APPROVAL_MODE_CHOICES, default=APPROVAL_MODE_NORMAL)
+    delegated_for_job_title = models.ForeignKey('accounts.JobTitle', on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_spare_part_approvals')
     decision = models.CharField(max_length=20, choices=DECISION_CHOICES, verbose_name="القرار")
     reason = models.CharField(max_length=1000, null=True, blank=True, verbose_name="سبب الرفض")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ القرار")
@@ -222,10 +232,23 @@ class SparePartApproval(models.Model):
     class Meta:
         verbose_name = "تعميد طلب قطع غيار"
         verbose_name_plural = "تعميدات طلبات قطع الغيار"
-        unique_together = ('request', 'approver')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['request', 'approval_level'],
+                condition=models.Q(approval_level__isnull=False),
+                name='unique_spare_part_approval_level_per_request',
+            ),
+        ]
 
 
 class CompleteReportApproval(models.Model):
+    APPROVAL_MODE_NORMAL = 'normal'
+    APPROVAL_MODE_DELEGATED = 'delegated'
+    APPROVAL_MODE_CHOICES = [
+        (APPROVAL_MODE_NORMAL, 'اعتماد مباشر'),
+        (APPROVAL_MODE_DELEGATED, 'اعتماد بالتفويض'),
+    ]
+
     DECISION_CHOICES = [
         ('accepted', 'تم القبول'),
         ('rejected', 'تم الرفض'),
@@ -233,6 +256,10 @@ class CompleteReportApproval(models.Model):
 
     report = models.ForeignKey(complete_report, on_delete=models.CASCADE, related_name='approvals', verbose_name="تقرير الإنجاز")
     approver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='complete_report_approvals', verbose_name="المعمد")
+    approval_level = models.ForeignKey('accounts.ApprovalLevel', on_delete=models.SET_NULL, null=True, blank=True, related_name='complete_report_approvals')
+    required_job_title = models.ForeignKey('accounts.JobTitle', on_delete=models.SET_NULL, null=True, blank=True, related_name='required_complete_report_approvals')
+    approval_mode = models.CharField(max_length=20, choices=APPROVAL_MODE_CHOICES, default=APPROVAL_MODE_NORMAL)
+    delegated_for_job_title = models.ForeignKey('accounts.JobTitle', on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_complete_report_approvals')
     decision = models.CharField(max_length=20, choices=DECISION_CHOICES, verbose_name="القرار")
     reason = models.CharField(max_length=1000, null=True, blank=True, verbose_name="سبب الرفض")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ القرار")
@@ -240,7 +267,13 @@ class CompleteReportApproval(models.Model):
     class Meta:
         verbose_name = "تعميد تقرير إنجاز"
         verbose_name_plural = "تعميدات تقارير الإنجاز"
-        unique_together = ('report', 'approver')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['report', 'approval_level'],
+                condition=models.Q(approval_level__isnull=False),
+                name='unique_complete_report_approval_level_per_report',
+            ),
+        ]
 
 
 class Notification(models.Model):

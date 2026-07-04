@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from hospital_units.models import Department
@@ -26,10 +26,84 @@ class JobTitle(models.Model):
         return self.title_name
 
 
+class ApprovalWorkflow:
+    PURCHASE = 'purchase'
+    STORE_ISSUE = 'store_issue'
+    ACHIEVEMENT_REPORT = 'achievement_report'
+
+    CHOICES = (
+        (PURCHASE, 'Spare part purchase approval'),
+        (STORE_ISSUE, 'Spare part store issue approval'),
+        (ACHIEVEMENT_REPORT, 'Achievement report approval'),
+    )
+
+    LABELS = dict(CHOICES)
+
+
+class ApprovalLevel(models.Model):
+    workflow_type = models.CharField(max_length=40, choices=ApprovalWorkflow.CHOICES, db_index=True)
+    order_number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    job_title = models.ForeignKey(JobTitle, on_delete=models.PROTECT, related_name='approval_levels')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['workflow_type', 'order_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['workflow_type', 'order_number'],
+                name='unique_approval_level_order_per_workflow',
+            ),
+        ]
+
+    def __str__(self):
+        workflow_label = ApprovalWorkflow.LABELS.get(self.workflow_type, self.workflow_type)
+        return f"{workflow_label} - Level {self.order_number}: {self.job_title}"
+
+
+class ApprovalDelegation(models.Model):
+    source_job_title = models.ForeignKey(JobTitle, on_delete=models.CASCADE, related_name='approval_delegations')
+    approval_level = models.ForeignKey(ApprovalLevel, on_delete=models.CASCADE, related_name='delegations')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['approval_level__workflow_type', 'approval_level__order_number', 'source_job_title__title_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source_job_title', 'approval_level'],
+                name='unique_approval_delegation_per_level',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.source_job_title} can approve {self.approval_level}"
+
+
 class JobTitlePermission(models.Model):
     job_title = models.OneToOneField(JobTitle, on_delete=models.CASCADE, related_name='permissions')
 
     can_manage_system_setup = models.BooleanField(default=False, verbose_name="Superuser / مسؤول تهيئة النظام")
+    can_manage_system_settings = models.BooleanField(default=False, verbose_name="إدارة إعدادات النظام")
+    can_manage_user_permissions = models.BooleanField(default=False, verbose_name="إدارة صلاحيات المستخدمين الخاصة")
+
+    can_view_employees = models.BooleanField(default=False, verbose_name="عرض الموظفين")
+    can_add_employees = models.BooleanField(default=False, verbose_name="إضافة الموظفين")
+    can_edit_employees = models.BooleanField(default=False, verbose_name="تعديل الموظفين")
+    can_delete_employees = models.BooleanField(default=False, verbose_name="حذف الموظفين")
+
+    can_view_job_titles = models.BooleanField(default=False, verbose_name="عرض المسميات الوظيفية")
+    can_add_job_titles = models.BooleanField(default=False, verbose_name="إضافة المسميات الوظيفية")
+    can_edit_job_titles_permissions = models.BooleanField(default=False, verbose_name="تعديل صلاحيات المسميات الوظيفية")
+    can_delete_job_titles = models.BooleanField(default=False, verbose_name="حذف المسميات الوظيفية")
+
+    can_view_organization_structure = models.BooleanField(default=False, verbose_name="عرض الهيكل التنظيمي")
+    can_manage_departments = models.BooleanField(default=False, verbose_name="إدارة الأقسام")
+    can_manage_buildings = models.BooleanField(default=False, verbose_name="إدارة المباني")
+    can_manage_floors = models.BooleanField(default=False, verbose_name="إدارة الطوابق")
+    can_manage_engineer_specialties = models.BooleanField(default=False, verbose_name="إدارة تخصصات المهندسين")
+
+    can_view_audit_logs = models.BooleanField(default=False, verbose_name="عرض سجلات العمليات")
+    can_manage_backups = models.BooleanField(default=False, verbose_name="إدارة النسخ الاحتياطية")
     can_view_audit_log = models.BooleanField(default=False, verbose_name="عرض سجل العمليات")
 
     is_department_manager = models.BooleanField(default=False, verbose_name="رئيس قسم")
@@ -45,15 +119,15 @@ class JobTitlePermission(models.Model):
     can_edit_delete_pending_parts = models.BooleanField(default=False, verbose_name="تعديل/حذف طلب قطع غيار (Pending)")
     can_approve_store_requisition = models.BooleanField(default=False, verbose_name="تعميد طلب صرف مخزني")
     store_approval_order = models.PositiveSmallIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(8)],
-        verbose_name="ترتيب تعميد الصرف (1-8)",
+        null=True, blank=True, validators=[MinValueValidator(1)],
+        verbose_name="ترتيب تعميد الصرف",
     )
     can_bypass_store_approval = models.BooleanField(default=False, verbose_name="صلاحية تجاوز التعميدات السابقة")
     max_store_bypass_order = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="أقصى رقم ترتيب يمكن تجاوزه")
     can_approve_purchase_order = models.BooleanField(default=False, verbose_name="تعميد طلب الشراء")
     purchase_approval_order = models.PositiveSmallIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(8)],
-        verbose_name="ترتيب تعميد الشراء (1-8)",
+        null=True, blank=True, validators=[MinValueValidator(1)],
+        verbose_name="ترتيب تعميد الشراء",
     )
     can_bypass_purchase_approval = models.BooleanField(default=False, verbose_name="صلاحية تجاوز تعميدات الشراء السابقة")
     max_purchase_bypass_order = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="أقصى رقم ترتيب شراء يمكن تجاوزه")
@@ -64,8 +138,8 @@ class JobTitlePermission(models.Model):
     can_edit_delete_pending_report = models.BooleanField(default=False, verbose_name="تعديل/حذف تقرير إنجاز (Pending)")
     can_approve_achievement_report = models.BooleanField(default=False, verbose_name="تعميد تقرير الإنجاز")
     achievement_approval_order = models.PositiveSmallIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name="ترتيب تعميد التقرير (1-5)",
+        null=True, blank=True, validators=[MinValueValidator(1)],
+        verbose_name="ترتيب تعميد التقرير",
     )
     can_bypass_achievement_approval = models.BooleanField(default=False, verbose_name="صلاحية تجاوز تعميدات التقرير السابقة")
     max_achievement_bypass_order = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="أقصى رقم ترتيب تقرير يمكن تجاوزه")
@@ -112,45 +186,19 @@ class JobTitlePermission(models.Model):
         if self.can_approve_maintenance:
             self.can_view_all_departments = True
 
-        structures = (
-            ('can_approve_store_requisition', 'store_approval_order', 'can_bypass_store_approval', 'max_store_bypass_order', 'الصرف المخزني'),
-            ('can_approve_purchase_order', 'purchase_approval_order', 'can_bypass_purchase_approval', 'max_purchase_bypass_order', 'طلب الشراء'),
-            ('can_approve_achievement_report', 'achievement_approval_order', 'can_bypass_achievement_approval', 'max_achievement_bypass_order', 'تقرير الإنجاز'),
+        approval_structures = (
+            ('can_approve_store_requisition', 'store_approval_order', 'can_bypass_store_approval', 'max_store_bypass_order'),
+            ('can_approve_purchase_order', 'purchase_approval_order', 'can_bypass_purchase_approval', 'max_purchase_bypass_order'),
+            ('can_approve_achievement_report', 'achievement_approval_order', 'can_bypass_achievement_approval', 'max_achievement_bypass_order'),
         )
-        for approve_field, order_field, bypass_field, max_bypass_field, label in structures:
+        for approve_field, order_field, bypass_field, max_bypass_field in approval_structures:
             if not getattr(self, approve_field):
                 setattr(self, order_field, None)
                 setattr(self, bypass_field, False)
                 setattr(self, max_bypass_field, None)
-                continue
-
-            order = getattr(self, order_field)
-            bypass = getattr(self, bypass_field)
-            max_bypass = getattr(self, max_bypass_field)
-            if not order:
-                raise ValidationError(f"يجب تحديد رقم ترتيب التعميد لـ {label}.")
-            if bypass:
-                if order < 2:
-                    raise ValidationError(f"لا يمكن تفعيل التجاوز لـ {label} عند الترتيب الأول.")
-                if not max_bypass:
-                    raise ValidationError(f"يجب تحديد أقصى ترتيب يمكن تجاوزه لـ {label}.")
-                if max_bypass >= order:
-                    raise ValidationError(f"أقصى ترتيب يمكن تجاوزه لـ {label} يجب أن يكون أقل من ترتيبك الحالي.")
-            else:
+            elif not getattr(self, bypass_field):
                 setattr(self, max_bypass_field, None)
-
-        unique_orders = (
-            ('can_approve_store_requisition', 'store_approval_order', 'الصرف المخزني'),
-            ('can_approve_purchase_order', 'purchase_approval_order', 'طلب الشراء'),
-            ('can_approve_achievement_report', 'achievement_approval_order', 'تقرير الإنجاز'),
-        )
-        for approve_field, order_field, label in unique_orders:
-            order = getattr(self, order_field)
-            if getattr(self, approve_field) and order:
-                duplicate = JobTitlePermission.objects.filter(**{order_field: order}).exclude(pk=self.pk).select_related('job_title').first()
-                print(f"the duplicate: {duplicate} ")
-                if duplicate is not None:
-                    raise ValidationError(f"رقم ترتيب تعميد {label} ({order}) محجوز مسبقاً للمسمى الوظيفي '{duplicate}'.")
+        return
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -159,18 +207,84 @@ class JobTitlePermission(models.Model):
         return self.job_title.title_name if self.job_title else 'بدون مسمى وظيفي'
 
 
+class UserPermissionOverride(models.Model):
+    ACTION_GRANT = 'grant'
+    ACTION_DENY = 'deny'
+    ACTION_CHOICES = (
+        (ACTION_GRANT, 'منح'),
+        (ACTION_DENY, 'سحب'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='permission_overrides', verbose_name="المستخدم")
+    permission_name = models.CharField(max_length=120, db_index=True, verbose_name="اسم الصلاحية")
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, db_index=True, verbose_name="نوع التعديل")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="آخر تحديث")
+
+    class Meta:
+        verbose_name = "صلاحية خاصة بالمستخدم"
+        verbose_name_plural = "صلاحيات خاصة بالمستخدمين"
+        ordering = ['user__username', 'permission_name', 'action']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'permission_name', 'action'],
+                name='unique_user_permission_override_action',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user', 'permission_name']),
+        ]
+
+    @staticmethod
+    def allowed_permission_names():
+        return {
+            field.name
+            for field in JobTitlePermission._meta.fields
+            if isinstance(field, models.BooleanField)
+        }
+
+    @staticmethod
+    def is_approval_override_name(permission_name):
+        prefix, separator, value = permission_name.partition(':')
+        if separator != ':' or prefix not in ('approval_level', 'approval_delegation'):
+            return False
+        return value.isdigit() and ApprovalLevel.objects.filter(pk=int(value)).exists()
+
+    def clean(self):
+        super().clean()
+        if (
+            self.permission_name not in self.allowed_permission_names()
+            and not self.is_approval_override_name(self.permission_name)
+        ):
+            raise ValidationError({'permission_name': "اسم الصلاحية غير موجود في صلاحيات المسمى الوظيفي."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} - {self.permission_name} - {self.action}"
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     job_title = models.ForeignKey(JobTitle, on_delete=models.SET_NULL, null=True, related_name='job_titles_profiles', verbose_name="المسمى الوظيفي")
     specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="التخصص (للفنيين فقط)")
     managing_department = models.OneToOneField(Department, verbose_name="رئيس القسم", related_name='managed_by', on_delete=models.SET_NULL, null=True, blank=True)
     phone_number = models.CharField(max_length=15, verbose_name="رقم الهاتف")
-    employee_id = models.CharField(max_length=20, unique=True, verbose_name="الرقم الوظيفي")
+    employee_id = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name="الرقم الوظيفي")
 
     def clean(self):
         super().clean()
         if not self.job_title:
             raise ValidationError({'job_title': "يجب اختيار مسمى وظيفي."})
+        if self.job_title.permissions.is_department_manager:
+            if not self.managing_department:
+                raise ValidationError({'managing_department': "يجب اختيار قسم لهذا الموظف لأنه رئيس قسم."})
+            elif Profile.objects.filter(managing_department=self.managing_department).exclude(pk=self.pk).exists():
+                raise ValidationError({'managing_department': "هذا القسم لديه بالفعل رئيس قسم معين."})
+        if self.job_title.permissions.is_engineer and not self.specialty:
+            raise ValidationError({'specialty': "يجب اختيار تخصص لهذا الموظف لأنه مهندس."})
 
     def __str__(self):
         job_title = self.job_title.title_name if self.job_title else 'بدون مسمى وظيفي'

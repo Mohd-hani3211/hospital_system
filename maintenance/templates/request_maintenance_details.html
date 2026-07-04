@@ -87,9 +87,9 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="rounded p-3 mt-2" style="background-color: #f8f9fa; border-right: 4px solid #17a2b8;">
+                    <div class="rounded p-3 mt-2 text-right" style="background-color: #f8f9fa; border-right: 4px solid #17a2b8;">
                         <small class="text-muted d-block mb-1">وصف العطل</small>
-                        <p class="mb-0 text-dark" style="line-height: 1.8;">{{ object.description }}</p>
+                        <p class="mb-0 font-weight-bold text-dark" style="line-height: 1.8;">{{ object.description }}</p>
                     </div>
 
                     {% if actions.can_accept_maintenance or actions.can_reject_maintenance or actions.can_accept_assignment or actions.can_reject_assignment or actions.can_reassign_engineer or actions.can_create_spare_part or actions.can_create_report %}
@@ -192,7 +192,7 @@
 
             {% if spare_part_requests %}
                 {% for part_req in spare_part_requests %}
-                    <div class="card shadow-sm border-0 mb-4">
+                    <div class="card shadow-sm border-0 mb-4 spare-request-card">
                         <div class="card-header bg-white border-bottom p-3">
                             <div class="d-flex align-items-center">
                                 <i class="material-icons text-primary ml-2">inventory_2</i>
@@ -222,13 +222,20 @@
                                     <small class="text-muted d-block mb-1">آخر إجراء</small>
                                     {% if part_req.latest_approval %}
                                         <span class="text-dark">{{ part_req.latest_approval.get_decision_display }} - {{ part_req.latest_approval.approver.get_full_name|default:part_req.latest_approval.approver.username }}</span>
+                                        <small class="text-muted d-block">
+                                            طريقة التعميد:
+                                            {% if part_req.latest_approval.approval_mode == 'delegated' %}تعميد نيابة{% else %}تعميد بصفته{% endif %}
+                                        </small>
+                                        {% if part_req.latest_approval.approval_mode == 'delegated' %}
+                                            <small class="text-warning d-block">نيابة عن: {{ part_req.latest_approval.delegated_for_job_title.title_name|default:part_req.latest_approval.required_job_title.title_name }}</small>
+                                        {% endif %}
                                     {% else %}
                                         <span class="text-muted">لا يوجد</span>
                                     {% endif %}
                                 </div>
                                 <div class="col-12 mb-3">
                                     <small class="text-muted d-block mb-1">سبب طلب القطع</small>
-                                    <span class="text-dark">{{ part_req.description }}</span>
+                                    <span class="font-weight-bold text-dark">{{ part_req.description }}</span>
                                 </div>
                             </div>
 
@@ -238,16 +245,16 @@
                                         <i class="material-icons align-middle ml-1" style="font-size: 16px;">fact_check</i>
                                         مستوى التعميد
                                     </small>
-                                    <small class="font-weight-bold text-dark">{{ part_req.acceptance }} / 8</small>
+                                    <small class="font-weight-bold text-dark">{{ part_req.acceptance }} / {{ part_req.approval_total }}</small>
                                 </div>
                                 <div class="progress" style="height: 9px; border-radius: 10px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated {% if part_req.acceptance >= 8 %}bg-success{% else %}bg-primary{% endif %}"
-                                         role="progressbar" style="width: {{ part_req.approval_percent }}%;" aria-valuenow="{{ part_req.acceptance }}" aria-valuemin="0" aria-valuemax="8"></div>
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated {% if part_req.approval_percent >= 100 %}bg-success{% else %}bg-primary{% endif %}"
+                                         role="progressbar" style="width: {{ part_req.approval_percent }}%;" aria-valuenow="{{ part_req.acceptance }}" aria-valuemin="0" aria-valuemax="{{ part_req.approval_total }}"></div>
                                 </div>
                             </div>
 
                             {% if part_req.rejected_reason or part_req.cause %}
-                                <div class="alert alert-warning text-right">
+                                <div class=" alert-warning text-right">
                                     <strong>سبب الرفض:</strong> {{ part_req.rejected_reason|default:part_req.cause }}
                                     {% if part_req.rejected_by %}
                                         <br><strong>رفض بواسطة:</strong> {{ part_req.rejected_by.get_full_name|default:part_req.rejected_by.username }}
@@ -256,20 +263,36 @@
                             {% endif %}
 
                             <div class="table-responsive">
-                                <table class="table table-hover table-striped mb-0">
+                                <table class="table table-hover table-striped spare-parts-table mb-0">
                                     <thead class="thead-light">
                                         <tr>
                                             <th class="text-right">اسم القطعة</th>
                                             <th class="text-center">الكمية</th>
+                                            <th class="text-center">الحاله</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for part in part_req.spare_parts.all %}
-                                            <tr>
+                                            <tr class=" {% if part.is_rejected  %}bg-danger text-white {% endif %} " data-part-id="{{ part.pk }}">
                                                 <td class="text-right">{{ part.part_name }}</td>
                                                 <td class="text-center">
                                                     <span class="badge badge-secondary px-2 py-1">{{ part.quantity }}</span>
                                                 </td>
+                                                <td class="text-center">
+                                                {% if part.is_rejected %}
+                                                <span class="badge badge-danger bg-danger">مرفوضة</span>
+
+                                                {% elif not part.is_rejected and part_req.approval_percent >= 100   %}
+                                                <span class="badge badge-success bg-success">معتمدة نهائياً</span>
+
+                                                {% elif part.acceptance > 0 %}
+                                                    <span class="badge badge-primary bg-primary">معتمدة مستوى {{ spare_part.acceptance }}</span>
+
+                                                {% else %}
+                                                    <span class="badge badge-secondary bg-secondary">بانتظار التعميد</span>
+                                                    
+                                                {% endif %}
+                                                    </td>
                                             </tr>
                                         {% empty %}
                                             <tr>
@@ -285,13 +308,43 @@
                                     <h6 class="font-weight-bold mb-2">إجراءات طلب قطع الغيار</h6>
                                     <div class="d-flex flex-column flex-md-row flex-wrap" style="gap: 8px;">
                                         {% if part_req.can_approve %}
-                                            <form action="{% url 'spare_part_approve_from_detail' part_req.pk %}" method="POST">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-success btn-sm mb-0">اعتماد</button>
-                                            </form>
+                                            {% for approval_action in part_req.approval_actions %}
+                                                <button type="button"
+                                                        class="btn {{ approval_action.button_class }} btn-sm mb-0 open-approval-confirmation"
+                                                        data-toggle="modal"
+                                                        data-target="#approvalConfirmModal"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#approvalConfirmModal"
+                                                        data-action-url="{{ approval_action.action_url }}"
+                                                        data-approval-mode="{{ approval_action.mode }}"
+                                                        data-extra-action="{{ approval_action.extra_action }}"
+                                                        data-modal-title="{{ approval_action.modal_title }}"
+                                                        data-confirm-label="{{ approval_action.confirm_label }}"
+                                                        data-confirmation-text="{{ approval_action.confirmation_text }}"
+                                                        data-current-user-name="{{ approval_action.current_user_name }}"
+                                                        data-current-user-job-title="{{ approval_action.current_user_job_title }}"
+                                                        data-workflow-label="{{ approval_action.workflow_label }}"
+                                                        data-subject-number="{{ approval_action.subject_number }}"
+                                                        data-required-level="{{ approval_action.required_level }}"
+                                                        data-required-job-title="{{ approval_action.required_job_title }}"
+                                                        data-required-employee-names="{{ approval_action.required_employee_names_text }}">
+                                                    {{ approval_action.button_label }}
+                                                </button>
+                                            {% endfor %}
                                         {% endif %}
                                         {% if part_req.can_reject %}
-                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectSpareDetail{{ part_req.pk }}">رفض</button>
+                                            <button type="button"
+                                                    class="btn btn-warning btn-sm mb-0 open-partial-reject-modal"
+                                                    data-toggle="modal"
+                                                    data-target="#partialRejectModal"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#partialRejectModal"
+                                                    data-request-id="{{ part_req.pk }}"
+                                                    data-action-url="{% url 'spare_part_reject_from_detail' part_req.pk %}">
+                                                <i class="fa fa-adjust ml-1"></i>
+                                                {{ part_req.partial_reject_action_label|default:"قبول الطلب ورفض بعض القطع" }}
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectSpareDetail{{ part_req.pk }}">{{ part_req.reject_action_label|default:"رفض" }}</button>
                                         {% endif %}
                                         {% if part_req.can_resubmit %}
                                             <a href="{% url 'spare_part_update' part_req.pk %}" class="btn btn-warning btn-sm mb-0">تعديل وإعادة إرسال</a>
@@ -332,6 +385,8 @@
                 {% endfor %}
             {% endif %}
 
+            
+
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white border-bottom p-3">
                     <div class="d-flex align-items-center">
@@ -358,15 +413,15 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="rounded p-3" style="background-color: #f8f9fa; border-right: 4px solid #28a745;">
+                        <div class="rounded p-3 text-right" style="background-color: #f8f9fa; border-right: 4px solid #28a745;">
                             <small class="text-muted d-block mb-1">ملاحظات الفني والإجراء المتخذ</small>
-                            <p class="mb-0 text-dark" style="line-height: 1.8;">{{ latest_report.complete_report|default:"لم يضف الفني تقرير الإنجاز." }}</p>
+                            <p class="mb-0 font-weight-bold text-dark " style="line-height: 1.8;">{{ latest_report.complete_report|default:"لم يضف الفني تقرير الإنجاز." }}</p>
                         </div>
                     {% elif latest_report %}
                         <div class="rounded p-3" style="background-color: #f8f9fa; border-right: 4px solid #17a2b8;">
                             <small class="text-muted d-block mb-1">تقرير الإنجاز</small>
                             <p class="mb-2 text-dark" style="line-height: 1.8;">{{ latest_report.complete_report }}</p>
-                            <span class="badge badge-primary">#{{ latest_report.id }} - {{ latest_report.get_status_display }} - {{ latest_report.acceptance }} / 5</span>
+                            <span class="badge badge-primary">#{{ latest_report.id }} - {{ latest_report.get_status_display }} - {{ latest_report.acceptance }} / {{ latest_report.approval_total }}</span>
                             <div class="row text-right mt-3">
                                 <div class="col-md-6 mb-2">
                                     <small class="text-muted d-block">تاريخ الإنشاء</small>
@@ -378,11 +433,18 @@
                                 </div>
                             </div>
                             <div class="progress my-3" style="height: 9px; border-radius: 10px;">
-                                <div class="progress-bar {% if latest_report.acceptance >= 5 %}bg-success{% else %}bg-primary{% endif %}"
-                                     role="progressbar" style="width: {{ latest_report.approval_percent }}%;" aria-valuenow="{{ latest_report.acceptance }}" aria-valuemin="0" aria-valuemax="5"></div>
+                                <div class="progress-bar {% if latest_report.approval_percent >= 100 %}bg-success{% else %}bg-primary{% endif %}"
+                                     role="progressbar" style="width: {{ latest_report.approval_percent }}%;" aria-valuenow="{{ latest_report.acceptance }}" aria-valuemin="0" aria-valuemax="{{ latest_report.approval_total }}"></div>
                             </div>
                             {% if latest_report.latest_approval %}
-                                <small class="text-muted d-block mb-2">آخر إجراء: {{ latest_report.latest_approval.get_decision_display }} بواسطة {{ latest_report.latest_approval.approver.get_full_name|default:latest_report.latest_approval.approver.username }}</small>
+                                <small class="text-muted d-block mb-1">آخر إجراء: {{ latest_report.latest_approval.get_decision_display }} بواسطة {{ latest_report.latest_approval.approver.get_full_name|default:latest_report.latest_approval.approver.username }}</small>
+                                <small class="text-muted d-block mb-1">
+                                    طريقة التعميد:
+                                    {% if latest_report.latest_approval.approval_mode == 'delegated' %}تعميد نيابة{% else %}تعميد بصفته{% endif %}
+                                </small>
+                                {% if latest_report.latest_approval.approval_mode == 'delegated' %}
+                                    <small class="text-warning d-block mb-2">نيابة عن: {{ latest_report.latest_approval.delegated_for_job_title.title_name|default:latest_report.latest_approval.required_job_title.title_name }}</small>
+                                {% endif %}
                             {% endif %}
                             {% if latest_report.status == 'rejected' %}
                                 <div class="alert alert-warning mt-3 mb-0">
@@ -397,13 +459,32 @@
                                     <h6 class="font-weight-bold mb-2">إجراءات تقرير الإنجاز</h6>
                                     <div class="d-flex flex-column flex-sm-row" style="gap: 8px;">
                                         {% if latest_report.can_approve %}
-                                            <form action="{% url 'complete_report_approve_from_detail' latest_report.pk %}" method="POST">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-success btn-sm mb-0">اعتماد التقرير</button>
-                                            </form>
+                                            {% for approval_action in latest_report.approval_actions %}
+                                                <button type="button"
+                                                        class="btn {{ approval_action.button_class }} btn-sm mb-0 open-approval-confirmation"
+                                                        data-toggle="modal"
+                                                        data-target="#approvalConfirmModal"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#approvalConfirmModal"
+                                                        data-action-url="{{ approval_action.action_url }}"
+                                                        data-approval-mode="{{ approval_action.mode }}"
+                                                        data-extra-action="{{ approval_action.extra_action }}"
+                                                        data-modal-title="{{ approval_action.modal_title }}"
+                                                        data-confirm-label="{{ approval_action.confirm_label }}"
+                                                        data-confirmation-text="{{ approval_action.confirmation_text }}"
+                                                        data-current-user-name="{{ approval_action.current_user_name }}"
+                                                        data-current-user-job-title="{{ approval_action.current_user_job_title }}"
+                                                        data-workflow-label="{{ approval_action.workflow_label }}"
+                                                        data-subject-number="{{ approval_action.subject_number }}"
+                                                        data-required-level="{{ approval_action.required_level }}"
+                                                        data-required-job-title="{{ approval_action.required_job_title }}"
+                                                        data-required-employee-names="{{ approval_action.required_employee_names_text }}">
+                                                    {{ approval_action.button_label }}
+                                                </button>
+                                            {% endfor %}
                                         {% endif %}
                                         {% if latest_report.can_reject %}
-                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectReportDetail">رفض التقرير</button>
+                                            <button type="button" class="btn btn-danger btn-sm mb-0" data-toggle="collapse" data-target="#rejectReportDetail">{{ latest_report.reject_action_label|default:"رفض التقرير" }}</button>
                                         {% endif %}
                                         {% if latest_report.can_resubmit %}
                                             <button type="button" class="btn btn-warning btn-sm mb-0" data-toggle="collapse" data-target="#createReportCollapse">تعديل وإعادة إرسال</button>
@@ -430,6 +511,107 @@
                     {% endif %}
                 </div>
             </div>
+
+
+            {% if approval_tracking_sections %}
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-bottom p-3">
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-primary ml-2">fact_check</i>
+                            <div>
+                                <h5 class="mb-0 font-weight-bold">متابعة التعميدات</h5>
+                                <small class="text-muted">المستويات المطلوبة وحالة كل مستوى حسب إعدادات التعميد الحالية</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        {% for workflow in approval_tracking_sections %}
+                            <div class="{% if not forloop.last %}mb-4 pb-4 border-bottom{% endif %}">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center text-right mb-3">
+                                    <div>
+                                        <h6 class="font-weight-bold mb-1">{{ workflow.workflow_label }}</h6>
+                                        <small class="text-muted">{{ workflow.subject_label }}</small>
+                                    </div>
+                                    {% if workflow.has_configured_levels %}
+                                        <span class="badge badge-light border text-dark mt-2 mt-md-0">
+                                            {{ workflow.levels|length }} مستوى
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                {% if workflow.has_configured_levels %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover text-right mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th style="width: 120px;">رقم المستوى</th>
+                                                    <th>المسمى الوظيفي المطلوب منه التعميد</th>
+                                                    <th style="width: 190px;">حالة التعميد</th>
+                                                    <th>تفاصيل الاعتماد</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for level in workflow.levels %}
+                                                    <tr>
+                                                        <td class="align-middle font-weight-bold">المستوى {{ level.order_number }}</td>
+                                                        <td class="align-middle">{{ level.required_job_title }}</td>
+                                                        <td class="align-middle">
+                                                            <span class="badge {{ level.status_badge_class }} px-2 py-1">
+                                                                <i class="material-icons align-middle ml-1" style="font-size: 16px;">{{ level.status_icon }}</i>
+                                                                {{ level.status_label }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="align-middle">
+                                                            {% if level.is_approved %}
+                                                                <div class="text-dark mb-1">
+                                                                    <small class="text-muted d-block">تم التعميد بواسطة:</small>
+                                                                    <span class="font-weight-bold">{{ level.approved_by }}</span>
+                                                                    {% if level.approved_by_job_title %}
+                                                                        <small class="text-muted">- {{ level.approved_by_job_title }}</small>
+                                                                    {% endif %}
+                                                                </div>
+                                                                {% if level.approved_by_delegation %}
+                                                                    <div class="text-warning mb-1">
+                                                                        <small class="d-block font-weight-bold">نيابة عن:</small>
+                                                                        <span class="font-weight-bold">{{ level.delegated_for_job_title|default:level.required_job_title }}</span>
+                                                                    </div>
+                                                                {% endif %}
+                                                                <small class="text-muted d-block">طريقة التعميد: {{ level.approval_mode_label }}</small>
+                                                                <small class="text-muted d-block">{{ level.approved_at|date:"Y-m-d H:i" }}</small>
+                                                                {% if level.approved_by_delegation %}
+                                                                    <div class="alert alert-warning py-2 px-3 mt-2 mb-0">
+                                                                        تم التعميد بواسطة {{ level.approved_by }} نيابة عن {{ level.delegated_for_job_title|default:level.required_job_title }}
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% elif level.is_rejected %}
+                                                                <div class="text-danger">
+                                                                    <span class="font-weight-bold">{{ level.approved_by }}</span>
+                                                                    {% if level.approved_by_job_title %}
+                                                                        <small>- {{ level.approved_by_job_title }}</small>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <small class="text-muted d-block">{{ level.approved_at|date:"Y-m-d H:i" }}</small>
+                                                            {% elif level.is_current_pending_level %}
+                                                                <span class="text-warning font-weight-bold">بانتظار صاحب الصلاحية الحالي</span>
+                                                            {% else %}
+                                                                <span class="text-muted">لم يصل الدور لهذا المستوى بعد</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info mb-0">
+                                        لا توجد مستويات تعميد مضافة لهذا النوع من الإعدادات.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <div class="col-lg-4">
@@ -517,6 +699,13 @@
                         <div>
                             <small class="text-muted d-block">آخر إجراء على التقرير</small>
                             <span class="font-weight-bold text-dark">{{ latest_report.latest_approval.get_decision_display }} - {{ latest_report.latest_approval.created_at|date:"Y-m-d H:i" }}</span>
+                            <small class="text-muted d-block">
+                                طريقة التعميد:
+                                {% if latest_report.latest_approval.approval_mode == 'delegated' %}تعميد نيابة{% else %}تعميد بصفته{% endif %}
+                            </small>
+                            {% if latest_report.latest_approval.approval_mode == 'delegated' %}
+                                <small class="text-warning d-block">نيابة عن: {{ latest_report.latest_approval.delegated_for_job_title.title_name|default:latest_report.latest_approval.required_job_title.title_name }}</small>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>
@@ -538,4 +727,127 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="partialRejectModal" tabindex="-1" role="dialog" aria-labelledby="partialRejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" dir="rtl">
+            <form id="partial-reject-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title font-weight-bold" id="partialRejectModalLabel">
+                        <i class="fa fa-adjust text-warning ml-1"></i>
+                        قبول الطلب ورفض بعض القطع
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body text-right">
+                    <p class="text-muted small mb-3">اختر القطع التي تريد رفضها، وسيتم تعميد بقية القطع في نفس العملية.</p>
+                    <div id="partial-reject-parts" class="border rounded p-2 mb-3"></div>
+
+                    <div class="form-group mb-0">
+                        <label for="partial-reject-cause" class="font-weight-bold">سبب الرفض</label>
+                        <textarea id="partial-reject-cause" name="cause" class="form-control" rows="3" required placeholder="اكتب سبب رفض القطع المحددة"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">إلغاء العملية</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-paper-plane ml-1"></i>
+                        إرسال
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var partialRejectForm = document.getElementById("partial-reject-form");
+    var partialRejectParts = document.getElementById("partial-reject-parts");
+    var partialRejectCause = document.getElementById("partial-reject-cause");
+
+    if (!partialRejectForm || !partialRejectParts || !partialRejectCause) {
+        return;
+    }
+
+    function openModal(modalId) {
+        var modalElement = document.getElementById(modalId);
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            return;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalElement).modal("show");
+        }
+    }
+
+    document.querySelectorAll(".open-partial-reject-modal").forEach(function(button) {
+        button.addEventListener("click", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var card = button.closest(".spare-request-card");
+            if (!card) {
+                return;
+            }
+
+            var rows = card.querySelectorAll(".spare-parts-table tbody tr");
+            partialRejectForm.action = button.dataset.actionUrl;
+            partialRejectCause.value = "";
+            partialRejectParts.innerHTML = "";
+
+            rows.forEach(function(row) {
+                var partName = row.children[0] ? row.children[0].textContent.trim() : "";
+                var quantity = row.children[1] ? row.children[1].textContent.trim() : "";
+
+                if (!button.dataset.actionUrl || !partName || row.children.length < 3) {
+                    return;
+                }
+
+                var sourcePartId = row.dataset.partId;
+                if (!sourcePartId) {
+                    return;
+                }
+
+                var item = document.createElement("label");
+                item.className = "d-flex align-items-center justify-content-between border rounded p-2 mb-2";
+
+                var nameWrapper = document.createElement("span");
+                var input = document.createElement("input");
+                input.type = "checkbox";
+                input.name = "rejected_part_ids";
+                input.value = sourcePartId;
+                input.className = "ml-2";
+                nameWrapper.appendChild(input);
+                nameWrapper.appendChild(document.createTextNode(" " + partName));
+
+                var quantityBadge = document.createElement("span");
+                quantityBadge.className = "badge badge-light bg-light border text-dark";
+                quantityBadge.textContent = quantity;
+
+                item.appendChild(nameWrapper);
+                item.appendChild(quantityBadge);
+                partialRejectParts.appendChild(item);
+            });
+
+            openModal("partialRejectModal");
+        });
+    });
+
+    partialRejectForm.addEventListener("submit", function(event) {
+        if (!partialRejectForm.querySelector('input[name="rejected_part_ids"]:checked')) {
+            event.preventDefault();
+            alert("يرجى اختيار قطعة واحدة على الأقل لرفضها.");
+        }
+    });
+});
+</script>
+{% include "partials/approval_confirmation_modal.html" %}
 {% endblock content %}

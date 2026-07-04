@@ -1,7 +1,7 @@
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 from django.forms import inlineformset_factory
 
+from accounts.permissions import user_has_role_permission
 from .models import MaintenanceRequest, SparePartRequest, SpareParts
 
 
@@ -18,10 +18,10 @@ class MaintenanceRequestForm(forms.ModelForm):
         model = MaintenanceRequest
         fields = ['description', 'department', 'required_specialty', 'priority']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 2, 'placeholder': 'وصف العطل بالتفصيل'}),
-            'department': forms.Select(attrs={'id': 'department-field'}),
-            'required_specialty': forms.Select(),
-            'priority': forms.Select(),
+            'description': forms.Textarea(attrs={'rows': 2,'class':'form-control', 'placeholder': 'وصف العطل بالتفصيل'}),
+            'department': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
+            'required_specialty': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
+            'priority': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -32,10 +32,7 @@ class MaintenanceRequestForm(forms.ModelForm):
 
         if user and user.is_authenticated and hasattr(user, 'profile'):
             profile = user.profile
-            try:
-                can_view_all_departments = profile.job_title.permissions.can_view_all_departments
-            except (AttributeError, ObjectDoesNotExist):
-                can_view_all_departments = False
+            can_view_all_departments = user_has_role_permission(user, 'can_view_all_departments')
             if not can_view_all_departments and profile.managing_department:
                 self.fields['department'].disabled = True
 

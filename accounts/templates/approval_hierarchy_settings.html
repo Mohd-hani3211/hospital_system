@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}
+<span class="title">إعدادات التعميدات</span>
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4" dir="rtl">
+  <div class="hospital-page-header p-4 mb-4">
+    <div class="row align-items-center">
+      <div class="col-lg-8 text-right mb-3 mb-lg-0">
+        <span class="hospital-section-eyebrow d-block mb-1">إدارة مسارات الاعتماد</span>
+        <h2 class="mb-2">إعدادات التعميدات</h2>
+        <p class="text-muted mb-0">حدد عدد مستويات التعميد والمسمى الوظيفي المسؤول عن كل مستوى لكل مسار.</p>
+      </div>
+      <div class="col-lg-4 text-lg-left text-right">
+        <a class="btn btn-outline-secondary" href="{% url 'system_settings' %}">
+          <i class="material-icons align-middle ml-1">arrow_back</i>
+          العودة لإعدادات النظام
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs system-settings-tabs justify-content-start mb-4" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'system_settings' %}">
+        <i class="material-icons align-middle ml-1">visibility</i>
+        عرض الإعدادات
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'system_settings_customize' %}">
+        <i class="material-icons align-middle ml-1">tune</i>
+        تخصيص إعدادات النظام
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'approval_hierarchy_settings' %}" aria-current="page">
+        <i class="material-icons align-middle ml-1">fact_check</i>
+        إعدادات التعميدات
+      </a>
+    </li>
+  </ul>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% for section in sections %}
+      <div class="card mb-4">
+        <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center text-right">
+          <div>
+            <h4 class="card-title mb-1">
+              <i class="material-icons align-middle text-primary ml-1">rule</i>
+              {{ section.title }}
+            </h4>
+            <small class="text-muted">المستويات يجب أن تكون متسلسلة وتبدأ من 1.</small>
+          </div>
+          <button type="submit"
+                  class="btn btn-outline-danger btn-sm mt-3 mt-md-0"
+                  name="workflow_action"
+                  value="remove_last_level|{{ section.workflow_type }}"
+                  {% if not section.levels %}disabled{% endif %}>
+            <i class="material-icons align-middle ml-1">remove_circle</i>
+            حذف آخر مستوى
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover text-right mb-3">
+              <thead class="thead-light">
+                <tr>
+                  <th style="width: 160px;">رقم المستوى</th>
+                  <th>المسمى الوظيفي المسؤول عن هذا المستوى</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for level in section.levels %}
+                  <tr>
+                    <td class="align-middle font-weight-bold">المستوى {{ level.order_number }}</td>
+                    <td>
+                      <select name="level_{{ level.pk }}_job_title" class="form-control" required>
+                        <option value="">الرجاء الاختيار</option>
+                        {% for job_title in job_titles %}
+                          <option value="{{ job_title.pk }}" {% if job_title.pk == level.job_title_id %}selected{% endif %}>
+                            {{ job_title.title_name }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="2">
+                      <div class="alert alert-info mb-0">لا توجد مستويات تعميد مضافة لهذا النوع.</div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="border rounded p-3 bg-light">
+            <div class="row align-items-end">
+              <div class="col-md-4 mb-3 mb-md-0 text-right">
+                <label class="font-weight-bold d-block">المستوى الجديد</label>
+                <span class="badge badge-primary px-3 py-2">المستوى {{ section.next_order_number }}</span>
+              </div>
+              <div class="col-md-6 mb-3 mb-md-0 text-right">
+                <label class="font-weight-bold">المسمى الوظيفي</label>
+                <select name="new_job_title_{{ section.workflow_type }}" class="form-control">
+                  <option value="">الرجاء الاختيار</option>
+                  {% for job_title in job_titles %}
+                    <option value="{{ job_title.pk }}">{{ job_title.title_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-2 text-left">
+                <button type="submit" class="btn btn-success mb-0" name="workflow_action" value="add_level|{{ section.workflow_type }}">
+                  <i class="material-icons align-middle ml-1">add_circle</i>
+                  إضافة
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-left mt-3">
+            <button type="submit" class="btn btn-primary" name="action" value="save">
+              <i class="material-icons align-middle ml-1">save</i>
+              حفظ هذا المسار
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="text-left mb-4">
+      <button type="submit" class="btn btn-primary" name="action" value="save">
+        <i class="material-icons align-middle ml-1">save</i>
+        حفظ إعدادات التعميدات
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

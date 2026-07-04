@@ -3,23 +3,18 @@
 
 {% block title %}
 <style>
-
 @media (max-width: 576px) {
     .title {
         font-weight: bold;
         margin: 15px;
         font-size: 24px;
     }
-        .icon {
-            display: none;
-        }
-
-         .delete-form {
+    .icon {
+        display: none;
+    }
+    .delete-form {
         display: block;
-        }
-       
-   
-
+    }
 }
 
 @media (min-width: 577px) {
@@ -31,84 +26,130 @@
     .icon {
         font-size: 24px;
     }
-     .delete-form {
+    .delete-form {
         display: inline;
-        }
-
+    }
 }
 </style>
-
-<span class="title"> قائمة التخصصات </span>
+<span class="title">قائمة التخصصات</span>
 {% endblock title %}
+
 {% block content %}
 
-<div class='card'>
+<div class="card mb-3" dir="rtl">
+    <div class="card-header card-header-text card-header-primary py-2">
+        <p class="font-weight-bold text-dark text-right d-inline float-right" >
+            <i class="material-icons">filter_list</i>
+            الفلاتر المتقدمه 
+        </p>
+        <button class="btn btn-info text-dark font-weight-bold  {% if not has_active_filters %}collapsed{% endif %}" type="button" data-toggle="collapse" data-target="#specialtiesAdvancedFilters" aria-expanded="{% if has_active_filters %}true{% else %}false{% endif %}" aria-controls="specialtiesAdvancedFilters">
+            <i class="material-icons align-middle">filter_list</i>
+            <span class="align-middle">الفلاتر والترتيب</span>
+        </button>
+        {% if applied_filters_count %}<span class="badge badge-light mr-1">{{ applied_filters_count }}</span>{% endif %}
+    </div>
+    <div id="specialtiesAdvancedFilters" class="collapse {% if has_active_filters %}show{% endif %}">
+        <div class="card-body">
+            <form method="get">
+                <div class="row align-items-end text-right" dir="rtl">
+                    <div class="col-12 col-md-4 mb-2">
+                        <label class="small font-weight-bold">بحث</label>
+                        <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="اسم التخصص">
+                    </div>
+                    <div class="col-12 col-md-4 mb-2">
+                        <label class="small font-weight-bold">طريقة الترتيب</label>
+                        <select name="ordering" class="form-control">
+                            <option value="name" {% if not filters.ordering or filters.ordering == "name" %}selected{% endif %}>الاسم تصاعدياً</option>
+                            <option value="-name" {% if filters.ordering == "-name" %}selected{% endif %}>الاسم تنازلياً</option>
+                            <option value="newest" {% if filters.ordering == "newest" %}selected{% endif %}>الأحدث أولاً</option>
+                            <option value="oldest" {% if filters.ordering == "oldest" %}selected{% endif %}>الأقدم أولاً</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3 d-flex justify-content-between align-items-end text-right" dir="rtl">
+                    <div class="col-12 col-md-8 mb-2" dir="rtl">
+                        {% include "partials/applied_filters.html" %}
+                    </div>
+                    <div class="d-flex align-items-end mb-2">
+                        <button type="submit" class="btn btn-primary btn-sm mb-0 ml-2">تطبيق الفلاتر</button>
+                        <a href="{% url 'specialties' %}" class="btn btn-secondary btn-sm mb-0">مسح الفلاتر</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card">
     <div class="card-header card-header-icon card-header-primary">
         <div class="card-icon icon">
             <i class="material-icons">assignment</i>
         </div>
-         <div class=" float-right ">
-                <a href="{% url "add_specialty" %}" class="btn btn-sm btn-primary btn-round" style="margin-top: -10px;">
-                      
+        {% if can_manage_engineer_specialties %}
+            <div class="float-right">
+                <a href="{% url 'add_specialty' %}" class="btn btn-sm btn-primary btn-round" style="margin-top: -10px;">
                     <i class="material-icons">add</i>
                 </a>
             </div>
-            
-        <h4 class="card-title "> قائمة التخصصات </h4>
+        {% endif %}
+        <h4 class="card-title">قائمة التخصصات</h4>
     </div>
     <div class="card-body table-full-width table-hover">
         <div class="table-responsive">
             <table class="table table-striped table-sm">
-                <thead class="">
-                    <th class="d-none d-sm-table-cell">
-                        ID
-                    </th>
-                    <th class="text-center">
-                        التخصص
-                    </th>
-                    <th class="text-center">
-                         الوصف                    
-                    </th>
-                    <th class="text-center">
-                        الاجراءات
-                    </th>
+                <thead>
+                    <tr>
+                        <th class="d-none d-sm-table-cell">ID</th>
+                        <th class="text-center">التخصص</th>
+                        <th class="text-center">الوصف</th>
+                        <th class="text-center">الإجراءات</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for specialty in specialties %}
-                    <tr class="">
-                        <td class="d-none d-sm-table-cell">
-                            {{ specialty.id }}
-                        </td>
-                        <td class="text-center">
-                            {{ specialty.name }}
-                        </td>
-                        <td class="text-center">
-                            {{ specialty.description|default:"لا يوجد" }}
-                        </td>
-                        <td class="text-center">
-                            <a href="{% url 'edit_specialty' specialty.id %}" class="btn btn-sm btn-primary btn-round">
-                                <i class="material-icons">edit</i>
-                            </a>
-                            <form method="POST" id="delete-form" action="{% url 'delete_specialty' specialty.id %}" class="delete-form">
-                                {% csrf_token %}
-                                <button type="button" class="btn btn-sm btn-danger btn-round"  onclick="confirmDelete()">
-                                    <i class="material-icons">delete</i>
-                                </button>
-                            </form>
-                    </tr>
+                        <tr>
+                            <td class="d-none d-sm-table-cell">{{ specialty.id }}</td>
+                            <td class="text-center">{{ specialty.name }}</td>
+                            <td class="text-center">{{ specialty.description|default:"لا يوجد" }}</td>
+                            <td class="text-center">
+                                {% if can_manage_engineer_specialties %}
+                                    <a href="{% url 'edit_specialty' specialty.id %}" class="btn btn-sm btn-primary btn-round">
+                                        <i class="material-icons">edit</i>
+                                    </a>
+                                    <form method="POST" id="delete-form" action="{% url 'delete_specialty' specialty.id %}" class="delete-form">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn btn-sm btn-danger btn-round" onclick="confirmDelete()">
+                                            <i class="material-icons">delete</i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">لا توجد نتائج مطابقة للفلاتر.</td>
+                        </tr>
                     {% endfor %}
-                   
-            
                 </tbody>
-
             </table>
-           
         </div>
+
+        {% if is_paginated %}
+            <nav aria-label="صفحات التخصصات">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">السابق</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?{% if filter_query_string %}{{ filter_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">التالي</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
     </div>
-                
 </div>
 
-<!-- في ملف roles.html أو القالب الأساسي -->
 {% if messages %}
     <ul class="messages">
         {% for message in messages %}
@@ -116,7 +157,5 @@
         {% endfor %}
     </ul>
 {% endif %}
-
-
 
 {% endblock %}

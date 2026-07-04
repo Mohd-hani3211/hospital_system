@@ -1,0 +1,134 @@
+.hospital-navbar-search {
+  position: relative;
+  min-width: 260px;
+}
+
+.hospital-global-search {
+  position: relative;
+  width: min(420px, 100%);
+  direction: rtl;
+}
+
+.hospital-global-search .form-control {
+  text-align: right;
+}
+
+.global-search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 2000;
+  max-height: min(62vh, 420px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, .16);
+  text-align: right;
+}
+
+.global-search-result {
+  display: block;
+  padding: 9px 10px;
+  border-radius: 7px;
+  color: #1F2937;
+  text-decoration: none;
+}
+
+.global-search-result:hover,
+.global-search-result:focus {
+  background: #F3F7FA;
+  color: #0F3A5C;
+  text-decoration: none;
+  outline: none;
+}
+
+.global-search-result + .global-search-result {
+  margin-top: 3px;
+}
+
+.global-search-result-type {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #E8F1F8;
+  color: #1F5F8B;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.global-search-result-title,
+.global-search-result-description {
+  display: block;
+}
+
+.global-search-result-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.global-search-result-description {
+  color: #6B7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.global-search-message {
+  padding: 12px 10px;
+  color: #6B7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+.global-search-message.is-loading {
+  color: #1F5F8B;
+}
+
+.global-search-message.is-error {
+  color: #B42318;
+}
+
+@media (max-width: 991.98px) {
+  .hospital-navbar-search {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .hospital-global-search {
+    width: 100%;
+  }
+
+  .hospital-navbar-search-desktop {
+    display: none !important;
+  }
+
+  .hospital-mobile-search-panel .global-search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    max-height: min(60vh, 420px);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hospital-global-search .form-control {
+    min-width: 0;
+    font-size: 14px;
+  }
+
+  .global-search-results,
+  .hospital-mobile-search-panel .global-search-results {
+    right: 0;
+    left: 0;
+    max-height: calc(100vh - 88px);
+  }
+}

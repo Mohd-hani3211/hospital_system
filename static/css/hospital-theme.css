@@ -77,6 +77,108 @@ a:focus {
   color: var(--hmms-muted);
 }
 
+.hmms-footer {
+  padding: 14px 0 18px;
+}
+
+.hmms-footer .container-fluid {
+  max-width: 1480px;
+}
+
+.hmms-footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.hmms-footer-main,
+.hmms-footer-developer,
+.hmms-footer-system-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hmms-footer-main {
+  color: var(--hmms-text);
+  font-size: .86rem;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.hmms-footer-version {
+  color: var(--hmms-primary) !important;
+}
+
+.hmms-footer-separator {
+  color: #CBD5E1 !important;
+}
+
+.hmms-footer-developer {
+  font-size: .8rem;
+  line-height: 1.6;
+}
+
+.hmms-footer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 1px solid #E5E7EB;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+  color: var(--hmms-muted) !important;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hmms-footer-chip i {
+  color: var(--hmms-primary);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.hmms-footer-chip .material-icons {
+  font-size: 15px;
+}
+
+a.hmms-footer-chip:hover,
+a.hmms-footer-chip:focus {
+  border-color: #BFDBFE;
+  background: #F7FBFF;
+  color: var(--hmms-primary) !important;
+  text-decoration: none;
+}
+
+.hmms-footer-system-contact {
+  color: var(--hmms-muted);
+  font-size: .76rem;
+  line-height: 1.7;
+}
+
+.hmms-footer-system-contact a,
+.hmms-footer-system-contact span {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  color: var(--hmms-muted) !important;
+  overflow-wrap: anywhere;
+}
+
+.hmms-footer-system-contact a:hover,
+.hmms-footer-system-contact a:focus {
+  color: var(--hmms-primary) !important;
+  text-decoration: none;
+}
+
 .title {
   color: var(--hmms-text);
   font-weight: 800 !important;
@@ -110,6 +212,27 @@ a:focus {
   align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+.hospital-navbar .hospital-navbar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.hospital-navbar-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.hospital-brand-cluster {
+  flex: 0 1 auto;
 }
 
 .hospital-navbar-brand {
@@ -160,18 +283,89 @@ a:focus {
   white-space: nowrap;
 }
 
-.navbar .title {
-  display: inline-block;
-  max-width: min(52vw, 720px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
+.hospital-navbar-title {
+  flex: 1 1 auto;
+  min-width: 160px;
+  text-align: right;
+}
+
+.navbar .hospital-navbar-title .title {
+  display: block;
+  max-width: none;
+  overflow: visible;
+  color: var(--hmms-text);
+  font-size: 1.02rem;
+  font-weight: 800 !important;
+  line-height: 1.45;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .hospital-navbar-search {
-  max-width: 280px;
-  margin-left: 12px;
+  max-width: 420px;
+  margin: 0;
+}
+
+.hospital-navbar-search-desktop {
+  flex: 0 1 420px;
+  min-width: 260px;
+}
+
+.hospital-navbar-actions {
+  flex: 0 0 auto;
+}
+
+.hospital-navbar-actions .navbar-nav {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+}
+
+.hospital-navbar-actions .nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.hospital-navbar-actions .nav-link,
+.hospital-mobile-search-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--hmms-text) !important;
+  cursor: pointer;
+}
+
+.hospital-navbar-actions .nav-link p {
+  display: none !important;
+}
+
+.hospital-navbar-actions .nav-link:hover,
+.hospital-navbar-actions .nav-link:focus,
+.hospital-mobile-search-toggle:hover,
+.hospital-mobile-search-toggle:focus {
+  background: #EEF6FF;
+  color: var(--hmms-primary) !important;
+  outline: none;
+}
+
+.hospital-mobile-search-panel {
+  position: relative;
+  width: 100%;
+  padding-top: 2px;
+}
+
+.hospital-navbar-search-mobile {
+  width: 100%;
+  max-width: none;
 }
 
 .navbar .navbar-nav .nav-link {
@@ -1776,9 +1970,79 @@ body.sidebar-mini .hospital-messages {
 
   .navbar,
   body.sidebar-mini .navbar {
+    position: sticky !important;
+    top: 0;
+    z-index: 1035;
     right: 0 !important;
     left: 0 !important;
-    padding: 8px 14px;
+    width: 100% !important;
+    padding: 8px 12px;
+  }
+
+  .hospital-navbar-main {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hospital-sidebar-toggle {
+    order: 1;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .hospital-brand-cluster {
+    order: 2;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .navbar-minimize {
+    display: none !important;
+  }
+
+  .hospital-navbar-brand {
+    max-width: 100%;
+    min-width: 0;
+    padding: 5px 8px;
+  }
+
+  .hospital-navbar-actions {
+    order: 3;
+    flex: 0 0 auto;
+  }
+
+  .hospital-navbar-actions .navbar-nav {
+    gap: 1px;
+  }
+
+  .hospital-navbar-actions .nav-link,
+  .hospital-mobile-search-toggle {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 7px;
+  }
+
+  .hospital-navbar-title {
+    order: 4;
+    flex: 1 0 100%;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background: #F8FAFC;
+  }
+
+  .navbar .hospital-navbar-title .title {
+    font-size: .98rem;
+    line-height: 1.55;
+  }
+
+  .hospital-navbar-search-desktop {
+    display: none !important;
+  }
+
+  .hospital-mobile-search-panel {
+    order: 5;
   }
 
   .main-panel,
@@ -1790,7 +2054,7 @@ body.sidebar-mini .hospital-messages {
   }
 
   .main-panel > .content {
-    padding-top: 68px;
+    padding-top: 12px;
   }
 
   .sidebar,
@@ -1828,11 +2092,6 @@ body.sidebar-mini .hospital-messages {
     display: block !important;
   }
 
-  .navbar .title {
-    max-width: 58vw;
-    font-size: 1.05rem;
-  }
-
   .hospital-messages,
   body.sidebar-mini .hospital-messages {
     right: 16px;
@@ -1848,7 +2107,7 @@ body.sidebar-mini .hospital-messages {
 
 @media (max-width: 767.98px) {
   .main-panel > .content {
-    padding: 64px 8px 40px;
+    padding: 12px 8px 40px;
   }
 
   .container-fluid {
@@ -1869,9 +2128,31 @@ body.sidebar-mini .hospital-messages {
     margin-left: 0;
   }
 
-  .navbar .title {
-    max-width: 48vw;
-    font-size: 1rem;
+  .hospital-navbar-brand-logo {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .hospital-navbar-brand-text {
+    max-width: 44vw;
+    font-size: .8rem;
+  }
+
+  .hmms-footer {
+    padding-bottom: 22px;
+  }
+
+  .hmms-footer-main,
+  .hmms-footer-developer,
+  .hmms-footer-system-contact {
+    gap: 6px;
+  }
+
+  .hmms-footer-chip {
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
   }
 
   .dropdown-menu {

@@ -1,0 +1,454 @@
+<style>
+  .user-permission-sources-card {
+    --ups-primary: var(--hmms-primary, #0F6CBD);
+    --ups-success: var(--hmms-success, #2E7D32);
+    --ups-danger: var(--hmms-danger, #D32F2F);
+    --ups-warning: var(--hmms-warning, #ED6C02);
+    --ups-border: var(--hmms-border, #E5E7EB);
+    --ups-text: var(--hmms-text, #1F2937);
+    --ups-muted: var(--hmms-muted, #6B7280);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .user-permission-sources-card * {
+    letter-spacing: 0 !important;
+  }
+
+  .user-permission-sources-card .permission-source-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--ups-border);
+    background: #fff;
+    padding: 18px 20px;
+  }
+
+  .user-permission-sources-card .permission-source-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .user-permission-sources-card .permission-source-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 13px;
+    background: #EAF4FF;
+    color: var(--ups-primary);
+  }
+
+  .user-permission-sources-card .permission-source-icon .material-icons {
+    font-size: 22px;
+  }
+
+  .user-permission-sources-card .permission-source-title h4 {
+    margin: 0;
+    color: var(--ups-text);
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .user-permission-sources-card .permission-source-title p {
+    margin: 4px 0 0;
+    color: var(--ups-muted);
+    font-size: .84rem;
+    line-height: 1.75;
+  }
+
+  .user-permission-sources-card .permission-source-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(110px, 1fr));
+    gap: 10px;
+    padding: 18px 20px 0;
+  }
+
+  .user-permission-sources-card .permission-stat {
+    border: 1px solid #E7EDF3;
+    border-radius: 12px;
+    background: #F8FAFC;
+    padding: 11px 12px;
+    text-align: right;
+  }
+
+  .user-permission-sources-card .permission-stat small {
+    display: block;
+    color: var(--ups-muted);
+    font-size: .75rem;
+    font-weight: 700;
+  }
+
+  .user-permission-sources-card .permission-stat strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--ups-text);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .user-permission-sources-card .permission-source-body {
+    padding: 18px 20px 20px;
+  }
+
+  .user-permission-sources-card .permission-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 16px;
+  }
+
+  .user-permission-sources-card .source-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 23px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+
+  .user-permission-sources-card .source-badge.is-effective {
+    background: #EAF7ED;
+    color: var(--ups-success);
+  }
+
+  .user-permission-sources-card .source-badge.is-role {
+    background: #EAF4FF;
+    color: var(--ups-primary);
+  }
+
+  .user-permission-sources-card .source-badge.is-super {
+    background: #F3E8FF;
+    color: #7E22CE;
+  }
+
+  .user-permission-sources-card .source-badge.is-auth {
+    background: #EEF2F7;
+    color: #475569;
+  }
+
+  .user-permission-sources-card .source-badge.is-grant {
+    background: #ECFDF5;
+    color: #047857;
+  }
+
+  .user-permission-sources-card .source-badge.is-deny {
+    background: #FDECEC;
+    color: var(--ups-danger);
+  }
+
+  .user-permission-sources-card .source-badge.is-approval {
+    background: #FFF4E8;
+    color: var(--ups-warning);
+  }
+
+  .user-permission-sources-card .permission-source-group {
+    border: 1px solid #EEF2F7;
+    border-radius: 14px;
+    background: #F8FAFC;
+    padding: 14px;
+  }
+
+  .user-permission-sources-card .permission-source-group + .permission-source-group {
+    margin-top: 14px;
+  }
+
+  .user-permission-sources-card .permission-source-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--ups-text);
+    font-size: .94rem;
+    font-weight: 800;
+  }
+
+  .user-permission-sources-card .permission-source-group-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--ups-primary);
+  }
+
+  .user-permission-sources-card .permission-source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .user-permission-sources-card .permission-source-row {
+    border: 1px solid #E7EDF3;
+    border-radius: 12px;
+    background: #fff;
+    padding: 11px 12px;
+    text-align: right;
+  }
+
+  .user-permission-sources-card .permission-source-row.is-denied {
+    border-color: rgba(211, 47, 47, .22);
+    background: #FFFBFB;
+  }
+
+  .user-permission-sources-card .permission-source-row.is-effective {
+    border-color: rgba(15, 108, 189, .18);
+  }
+
+  .user-permission-sources-card .permission-source-name {
+    display: block;
+    color: var(--ups-text);
+    font-size: .88rem;
+    font-weight: 800;
+    line-height: 1.65;
+  }
+
+  .user-permission-sources-card .permission-source-note {
+    display: block;
+    margin-top: 4px;
+    color: var(--ups-muted);
+    font-size: .76rem;
+    line-height: 1.7;
+  }
+
+  .user-permission-sources-card .permission-source-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .user-permission-sources-card .approval-workflow-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 2px 0 10px;
+    color: var(--ups-text);
+    font-size: .88rem;
+    font-weight: 800;
+  }
+
+  .user-permission-sources-card .approval-workflow + .approval-workflow {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #E7EDF3;
+  }
+
+  .user-permission-sources-card .approval-level-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .user-permission-sources-card .level-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #EAF4FF;
+    color: var(--ups-primary);
+    padding: 3px 8px;
+    font-size: .72rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .user-permission-sources-card .empty-permissions {
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    background: #fff;
+    padding: 16px;
+    color: var(--ups-muted);
+    font-size: .86rem;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  @media (max-width: 991.98px) {
+    .user-permission-sources-card .permission-source-summary {
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .user-permission-sources-card .permission-source-header {
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .user-permission-sources-card .permission-source-summary {
+      grid-template-columns: 1fr;
+      padding: 16px 16px 0;
+    }
+
+    .user-permission-sources-card .permission-source-body {
+      padding: 16px;
+    }
+
+    .user-permission-sources-card .permission-source-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .user-permission-sources-card .approval-level-line {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<section class="card user-permission-sources-card shadow-sm border-0 mb-4" dir="rtl">
+  <div class="permission-source-header text-right">
+    <div class="permission-source-title">
+      <span class="permission-source-icon">
+        <i class="material-icons">security</i>
+      </span>
+      <div>
+        <h4>الصلاحيات الفعلية ومصدرها</h4>
+        <p>يعرض هذا القسم الصلاحيات التي تعمل فعلياً لهذا المستخدم، مع توضيح مصدرها وهل تم منحها كاستثناء أو سحبها من المستخدم.</p>
+      </div>
+    </div>
+    {% if can_manage_user_permissions %}
+      <a href="{% url 'employee_permissions' employee.id %}" class="btn btn-sm btn-outline-primary mb-0">
+        <i class="material-icons align-middle" style="font-size: 18px;">manage_accounts</i>
+        إدارة صلاحيات الموظف
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="permission-source-summary">
+    <div class="permission-stat">
+      <small>صلاحيات فعالة</small>
+      <strong>{{ user_permission_override_data.summary.effective_count }}</strong>
+    </div>
+    <div class="permission-stat">
+      <small>من المسمى الوظيفي</small>
+      <strong>{{ user_permission_override_data.summary.role_count }}</strong>
+    </div>
+    <div class="permission-stat">
+      <small>إضافات خاصة</small>
+      <strong>{{ user_permission_override_data.summary.grant_count }}</strong>
+    </div>
+    <div class="permission-stat">
+      <small>صلاحيات مسحوبة</small>
+      <strong>{{ user_permission_override_data.summary.deny_count }}</strong>
+    </div>
+    <div class="permission-stat">
+      <small>تعميدات فعالة</small>
+      <strong>{{ user_permission_override_data.summary.approval_effective_count }}</strong>
+    </div>
+  </div>
+
+  <div class="permission-source-body">
+    <div class="permission-legend text-right">
+      <span class="source-badge is-effective">مفعلة</span>
+      <span class="source-badge is-role">من المسمى الوظيفي</span>
+      <span class="source-badge is-super">من صلاحية تهيئة النظام</span>
+      <span class="source-badge is-auth">من مجموعة/صلاحية نظام</span>
+      <span class="source-badge is-grant">إضافة خاصة</span>
+      <span class="source-badge is-deny">مسحوبة</span>
+      <span class="source-badge is-approval">تعميد</span>
+    </div>
+
+    {% if user_permission_override_data.grouped_permissions or user_permission_override_data.approval_sections %}
+      {% for group in user_permission_override_data.grouped_permissions %}
+        <div class="permission-source-group">
+          <div class="permission-source-group-title">{{ group.label }}</div>
+          <div class="permission-source-grid">
+            {% for permission in group.permissions %}
+              <div class="permission-source-row {% if permission.is_denied %}is-denied{% elif permission.effective_enabled %}is-effective{% endif %}">
+                <span class="permission-source-name">{{ permission.label }}</span>
+                <span class="permission-source-note">
+                  {% if permission.is_denied and permission.via_system_setup %}
+                    هذه الصلاحية مسحوبة كصلاحية تفصيلية، لكنها ما زالت فعالة بسبب صلاحية تهيئة النظام الشاملة.
+                  {% elif permission.is_denied %}
+                    هذه الصلاحية مسحوبة من المستخدم حتى لو كانت موجودة في المسمى الوظيفي.
+                  {% elif permission.effective_enabled %}
+                    هذه الصلاحية مفعلة حالياً للمستخدم.
+                  {% else %}
+                    هذه الصلاحية موجودة كاستثناء لكنها غير فعالة حالياً.
+                  {% endif %}
+                </span>
+                <span class="permission-source-badges">
+                  {% if permission.effective_enabled %}
+                    <span class="source-badge is-effective">مفعلة</span>
+                  {% endif %}
+                  {% if permission.role_enabled %}
+                    <span class="source-badge is-role">من المسمى الوظيفي</span>
+                  {% endif %}
+                  {% if permission.via_system_setup %}
+                    <span class="source-badge is-super">من صلاحية تهيئة النظام</span>
+                  {% endif %}
+                  {% if permission.auth_enabled %}
+                    <span class="source-badge is-auth">من مجموعة/صلاحية نظام</span>
+                  {% endif %}
+                  {% if permission.is_granted %}
+                    <span class="source-badge is-grant">إضافة خاصة</span>
+                  {% endif %}
+                  {% if permission.is_denied %}
+                    <span class="source-badge is-deny">مسحوبة</span>
+                  {% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if user_permission_override_data.approval_sections %}
+        <div class="permission-source-group">
+          <div class="permission-source-group-title">صلاحيات التعميد والتعميد نيابة عن</div>
+          {% for section in user_permission_override_data.approval_sections %}
+            <div class="approval-workflow">
+              <div class="approval-workflow-title">
+                <span>{{ section.label }}</span>
+                <span class="source-badge is-approval">{{ section.permissions|length }} صلاحية</span>
+              </div>
+              <div class="permission-source-grid">
+                {% for approval in section.permissions %}
+                  <div class="permission-source-row {% if approval.is_denied %}is-denied{% elif approval.effective_enabled %}is-effective{% endif %}">
+                    <div class="approval-level-line">
+                      <div>
+                        <span class="level-chip">المستوى {{ approval.level.order_number }}</span>
+                        <span class="permission-source-name mt-2">{{ approval.mode_label }}</span>
+                        <span class="permission-source-note">المسمى المطلوب: {{ approval.level.job_title.title_name }}</span>
+                      </div>
+                      <span class="permission-source-badges">
+                        {% if approval.effective_enabled %}
+                          <span class="source-badge is-effective">مفعلة</span>
+                        {% endif %}
+                        {% if approval.role_enabled %}
+                          <span class="source-badge is-role">من المسمى الوظيفي</span>
+                        {% endif %}
+                        {% if approval.is_granted %}
+                          <span class="source-badge is-grant">إضافة خاصة</span>
+                        {% endif %}
+                        {% if approval.is_denied %}
+                          <span class="source-badge is-deny">مسحوبة</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-permissions">
+        لا توجد صلاحيات فعالة أو استثناءات مسجلة لهذا المستخدم حالياً.
+      </div>
+    {% endif %}
+  </div>
+</section>

@@ -18,6 +18,14 @@
             <p class="text-muted mb-2">
               <i class="material-icons align-middle ml-1" style="font-size: 17px;">badge</i>
               {{ profile_obj.job_title.title_name|default:"بدون مسمى وظيفي" }}
+              
+              {% if profile_obj.managing_department %}
+               ( {{ profile_obj.managing_department.name|default:"لم يتم تعيين القسم" }} )
+
+               {% elif profile_obj.specialty %}
+               ( {{ profile_obj.specialty.name|default:"لم يتم تحديد التخصص " }} )
+              {% endif %}
+                
             </p>
             {% if employee.is_active %}
               <span class="badge badge-success bg-success px-3 py-2">نشط</span>
@@ -27,6 +35,8 @@
             {% if role_data.can_manage_system_setup %}
               <span class="badge badge-primary px-3 py-2">مسؤول تهيئة النظام</span>
             {% endif %}
+              
+
           </div>
         </div>
         <a href="{% url 'change_my_password' %}" class="btn btn-primary">
@@ -106,6 +116,20 @@
           {% for role in role_data.role_labels %}
             <span class="badge badge-primary bg-primary px-3 py-2 mb-1">{{ role }}</span>
           {% endfor %}
+          <div class="row mt-3">
+            <div class="col-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">صلاحيات فعالة</small>
+                <strong>{{ user_permission_override_data.summary.effective_count }}</strong>
+              </div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="border rounded p-3 bg-light h-100">
+                <small class="text-muted d-block">مسحوبة</small>
+                <strong>{{ user_permission_override_data.summary.deny_count }}</strong>
+              </div>
+            </div>
+          </div>
           <div class="mt-3">
             <small class="text-muted d-block">طلبات قطع الغيار التي أنشأتها</small>
             <strong>{{ stats.spare_part_requests }}</strong>
@@ -136,6 +160,8 @@
       </div>
     </div>
   </div>
+
+  {% include "user_permission_sources.html" %}
 
   <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-white">

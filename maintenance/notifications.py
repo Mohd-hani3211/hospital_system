@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.urls import reverse
 
 from accounts.models import JobTitlePermission
+from .access import user_can_view_complete_report, user_can_view_spare_part_request
 from .models import Notification
 
 
@@ -61,21 +62,23 @@ def create_notification(
     spare_part_request=None,
     complete_report=None,
     url=None,
+    deduplicate=True,
 ):
     if not recipient:
         return None
 
     url = url or _default_url(maintenance_request, spare_part_request, complete_report)
-    duplicate_qs = Notification.objects.filter(
-        recipient=recipient,
-        notification_type=notification_type,
-        related_maintenance_request=maintenance_request,
-        related_spare_part_request=spare_part_request,
-        related_complete_report=complete_report,
-        is_read=False,
-    )
-    if duplicate_qs.exists():
-        return None
+    if deduplicate:
+        duplicate_qs = Notification.objects.filter(
+            recipient=recipient,
+            notification_type=notification_type,
+            related_maintenance_request=maintenance_request,
+            related_spare_part_request=spare_part_request,
+            related_complete_report=complete_report,
+            is_read=False,
+        )
+        if duplicate_qs.exists():
+            return None
 
     return Notification.objects.create(
         recipient=recipient,
@@ -96,6 +99,67 @@ def notify_users(users, title, message, notification_type='general', **kwargs):
         if notification:
             notifications.append(notification)
     return notifications
+
+
+def _user_display_name(user):
+    return user.get_full_name() or user.username
+
+
+def _active_users_with_job_title(job_title):
+    if not job_title:
+        return User.objects.none()
+    return User.objects.filter(
+        is_active=True,
+        profile__job_title=job_title,
+    ).select_related('profile', 'profile__job_title').distinct()
+
+
+def notify_delegated_spare_part_approval(spare_part_request, approval):
+    if not approval or approval.approval_mode != 'delegated' or not approval.required_job_title_id:
+        return []
+
+    approver_name = _user_display_name(approval.approver)
+    if spare_part_request.order_kind == 'store_requisition':
+        workflow_title = 'تعميد طلب صرف قطع الغيار'
+        message = f"قام {approver_name} بتعميد طلب صرف قطع الغيار رقم #{spare_part_request.pk} نيابة عنك."
+    else:
+        workflow_title = 'تعميد طلب شراء قطع الغيار'
+        message = f"قام {approver_name} بتعميد طلب شراء قطع الغيار رقم #{spare_part_request.pk} نيابة عنك."
+
+    recipients = [
+        user for user in _active_users_with_job_title(approval.required_job_title)
+        if user.pk != approval.approver_id and user_can_view_spare_part_request(user, spare_part_request)
+    ]
+    return notify_users(
+        recipients,
+        f"{workflow_title} #{spare_part_request.pk}",
+        message,
+        'general',
+        spare_part_request=spare_part_request,
+        url=maintenance_detail_url(spare_part_request.maintenance_request),
+        deduplicate=False,
+    )
+
+
+def notify_delegated_complete_report_approval(report, approval):
+    if not approval or approval.approval_mode != 'delegated' or not approval.required_job_title_id:
+        return []
+
+    approver_name = _user_display_name(approval.approver)
+    recipients = [
+        user for user in _active_users_with_job_title(approval.required_job_title)
+        if user.pk != approval.approver_id and user_can_view_complete_report(user, report)
+    ]
+    return notify_users(
+        recipients,
+        f"تعميد تقرير الإنجاز #{report.pk}",
+        f"قام {approver_name} بتعميد تقرير الإنجاز رقم #{report.pk} نيابة عنك.",
+        'general',
+        maintenance_request=report.maintenance_request,
+        complete_report=report,
+        url=maintenance_detail_url(report.maintenance_request),
+        deduplicate=False,
+    )
 
 
 def notify_maintenance_needs_acceptance(maintenance_request):

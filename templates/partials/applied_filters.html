@@ -1,0 +1,15 @@
+{% if applied_filters %}
+<div class="mb-3" dir="rtl">
+    <div class="small font-weight-bold text-muted mb-2 ">الفلاتر المطبقة</div>
+    <div class="d-flex flex-wrap" style="gap: 6px;">
+        {% for applied_filter in applied_filters %}
+            <a href="{{ applied_filter.remove_url }}" class="badge badge-info p-2 mb-1" title="حذف هذا الفلتر">
+                {{ applied_filter.label }}: {{ applied_filter.value }}
+                <span aria-hidden="true">&times;</span>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="small text-muted mb-3" dir="rtl">لا توجد فلاتر مطبقة</div>
+{% endif %}
