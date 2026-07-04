@@ -179,6 +179,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 
+# session age settings
+
+SESSION_COOKIE_AGE = 15
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 from django.contrib.messages import constants as messages
 
 MESSAGE_TAGS = {
