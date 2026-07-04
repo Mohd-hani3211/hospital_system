@@ -20,8 +20,8 @@ class MaintenanceRequestForm(forms.ModelForm):
         widgets = {
             'description': forms.Textarea(attrs={'rows': 2,'class':'form-control', 'placeholder': 'وصف العطل بالتفصيل'}),
             'department': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
-            'required_specialty': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
-            'priority': forms.Select(attrs={'id': 'department-field', 'class':'form-control'}),
+            'required_specialty': forms.Select(attrs={ 'class':'form-control'}),
+            'priority': forms.Select(attrs={'class':'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
