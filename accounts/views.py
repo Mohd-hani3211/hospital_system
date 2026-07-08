@@ -1755,6 +1755,7 @@ def Profile(request):
     context.update({
         'title': 'My Profile',
         'can_manage_employee': False,
+        'can_edit_own_profile': request.user.is_superuser,
         **account_navigation_context(
             'الملف الشخصي',
             show_back_button=True,
@@ -1801,12 +1802,24 @@ def change_my_password(request):
 @login_required(login_url='login')
 @transaction.atomic
 def EditEmployee(request, pk):
-    require_role_permission(request, 'can_edit_employees')
+    is_editing_own_superuser_profile = request.user.is_superuser and pk == request.user.pk
+    if not is_editing_own_superuser_profile:
+        require_role_permission(request, 'can_edit_employees')
     employee = get_object_or_404(User, pk=pk)
     old_user_data = serialize_instance(employee, fields=['username', 'first_name', 'last_name', 'email', 'is_active'])
     old_profile_data = serialize_instance(employee.profile, fields=['job_title', 'specialty', 'managing_department', 'employee_id', 'phone_number'])
     old_job_title = employee.profile.job_title
     job_permissions = get_job_permissions_map()
+    edit_title = 'تعديل بياناتي الشخصية' if is_editing_own_superuser_profile else 'تعديل بيانات الموظف'
+    navigation_context = account_navigation_context(
+        edit_title if is_editing_own_superuser_profile else f'تعديل الموظف #{employee.pk}',
+        section_label='الملف الشخصي' if is_editing_own_superuser_profile else 'الموظفون',
+        section_url_name='profile' if is_editing_own_superuser_profile else 'employees',
+        show_back_button=True,
+        back_url_name='profile' if is_editing_own_superuser_profile else 'employee_detail',
+        back_url_kwargs=None if is_editing_own_superuser_profile else {'pk': employee.pk},
+    )
+    cancel_url = reverse('profile') if is_editing_own_superuser_profile else reverse('employee_detail', kwargs={'pk': employee.pk})
     if request.method == 'POST':
         user_form = UserForm(request.POST, instance=employee, require_password=False)
         profile_form = ProfileForm(request.POST, instance=employee.profile)
@@ -1820,6 +1833,8 @@ def EditEmployee(request, pk):
                 and hasattr(new_job_title, 'permissions')
                 and new_job_title.permissions.can_manage_system_setup
             )
+            if employee.has_perm(SYSTEM_SETUP_PERMISSION):
+                new_can_manage = True
             system_setup_overrides = set(
                 UserPermissionOverride.objects.filter(
                     user=employee,
@@ -1849,6 +1864,9 @@ def EditEmployee(request, pk):
                             back_url_name='employee_detail',
                             back_url_kwargs={'pk': employee.pk},
                         ),
+                        'title': edit_title,
+                        'cancel_url': cancel_url,
+                        **navigation_context,
                     })
             if user_form.cleaned_data['password']:
                 user.set_password(user_form.cleaned_data['password'])
@@ -1868,6 +1886,9 @@ def EditEmployee(request, pk):
                 description=f"تم تعديل بيانات الموظف {user.get_full_name() or user.username}",
                 request=request,
             )
+            messages.success(request, "تم حفظ التعديلات بنجاح.")
+            if is_editing_own_superuser_profile:
+                return redirect('profile')
             return redirect('employees')
     else:
         user_form = UserForm(instance=employee, require_password=False)
@@ -1886,6 +1907,9 @@ def EditEmployee(request, pk):
             back_url_name='employee_detail',
             back_url_kwargs={'pk': employee.pk},
         ),
+        'title': edit_title,
+        'cancel_url': cancel_url,
+        **navigation_context,
     })
 
 
