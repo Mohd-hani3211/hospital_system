@@ -56,6 +56,7 @@
       justify-content: space-between;
       gap: 10px;
       margin: 0 0 14px;
+      margin-top: 10px;
       padding: 9px 12px;
       border: 1px solid #E5E7EB;
       border-radius: 10px;
@@ -149,6 +150,7 @@
           align-items: flex-start;
           flex-direction: column;
           margin-bottom: 10px;
+          margin-top: -20px;
           padding: 8px 10px;
       }
 
@@ -337,18 +339,27 @@
                   <i class="material-icons" aria-hidden="true">code</i>
                   تطوير: محمد هاني
                 </span>
+                <span class="hmms-footer-chip hmms-footer-developer-name">
+                  <i class="material-icons" aria-hidden="true">code</i>
+                  اعداد وتصميم: سام الحبري
+                </span>
                 <a class="hmms-footer-chip" href="tel:777970828">
                   <i class="material-icons" aria-hidden="true">phone</i>
-                  هاتف: 777970828
+                  هاتف(1): 777970828
+                </a>
+                <a class="hmms-footer-chip" href="tel:776565933">
+                  <i class="material-icons" aria-hidden="true">phone</i>
+                  هاتف(2): 776565933
                 </a>
                 <a class="hmms-footer-chip" href="https://wa.me/967777970828" target="_blank" rel="noopener">
                   <i class="fa fa-whatsapp" aria-hidden="true"></i>
-                  واتساب: 777970828
+                  واتساب(1): 777970828
                 </a>
-                <span class="hmms-footer-chip">
-                  <i class="fa fa-telegram" aria-hidden="true"></i>
-                  تيليجرام: 777970828
-                </span>
+                <a class="hmms-footer-chip" href="https://wa.me/967776565933" target="_blank" rel="noopener">
+                  <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                  واتساب(2): 776565933
+                </a>
+                
               </div>
 
               {% if system_settings.phone or system_settings.email or system_settings.address %}

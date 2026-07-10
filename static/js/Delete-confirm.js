@@ -16,7 +16,7 @@
   /* Read more about isConfirmed, isDenied below */
   if (result.isConfirmed) {
     document.getElementById('delete-form').submit();
-    Swal.fire("Saved!", "", "success");
+    // Swal.fire("Saved!", "", "success");
   }
 });
 }
